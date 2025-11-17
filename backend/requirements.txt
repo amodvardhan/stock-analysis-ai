@@ -22,9 +22,13 @@ asyncpg==0.30.0  # Latest version with Python 3.13 support
 pgvector==0.3.5
 
 # Redis & Celery
-redis==5.2.0
-celery==5.4.0
-flower==2.0.1
+redis==5.0.1
+python-redis-cache==3.0.0
+tenacity==8.2.3
+fake-useragent==1.4.0
+#celery==5.4.0
+celery[redis]==5.4.0
+flower==2.0.1  # Web UI for monitoring Celery tasks
 
 # AI/LLM
 langchain==0.3.7

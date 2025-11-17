@@ -115,6 +115,15 @@ class Settings(BaseSettings):
         description="Price movement % that triggers alert"
     )
     
+    # Redis Configuration
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+    REDIS_DB: int = 0
+    
+    # API Rate Limiting
+    YFINANCE_REQUESTS_PER_HOUR: int = 2000
+    CACHE_TTL_SECONDS: int = 3600  # 1 hour
+    
     # -------------------------
     # Pydantic Configuration
     # -------------------------
