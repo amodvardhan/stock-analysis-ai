@@ -27,6 +27,41 @@ services:
       retries: 5
     networks:
       - aihub_network
+  celery_worker:
+    build: ./backend
+    command: celery -A core.celery_app worker --loglevel=info --concurrency=4
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://user:password@postgres:5432/aidb
+      - REDIS_HOST=redis
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    restart: unless-stopped
+  
+  celery_beat:
+    build: ./backend
+    command: celery -A core.celery_app beat --loglevel=info
+    volumes:
+      - ./backend:/app
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+    restart: unless-stopped
+  
+  flower:
+    build: ./backend
+    command: celery -A core.celery_app flower --port=5555
+    ports:
+      - "5555:5555"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOST=redis
+    restart: unless-stopped  
 
   # Redis for Caching and Celery
   redis:
