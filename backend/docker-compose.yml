@@ -1,0 +1,88 @@
+# =============================================================================
+# AI Hub - Docker Compose (Infrastructure Only)
+# =============================================================================
+# This runs ONLY the infrastructure services (PostgreSQL, Redis)
+# Python backend runs locally in your virtual environment for faster development
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database with Vector Extension
+  postgres:
+    image: ankane/pgvector:latest
+    container_name: aihub_postgres
+    environment:
+      POSTGRES_USER: aihub_user
+      POSTGRES_PASSWORD: aihub_password_2025
+      POSTGRES_DB: aihub_stock_intelligence
+    ports:
+      - "5432:5432"  # Exposed to host for local Python access
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aihub_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - aihub_network
+
+  # Redis for Caching and Celery
+  redis:
+    image: redis:7-alpine
+    container_name: aihub_redis
+    ports:
+      - "6379:6379"  # Exposed to host for local Python access
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+    networks:
+      - aihub_network
+
+  # Optional: pgAdmin for database management (Web UI)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: aihub_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@aihub.com
+      PGADMIN_DEFAULT_PASSWORD: admin123
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - aihub_network
+    profiles:
+      - tools  # Only starts if you explicitly want it
+
+  # Optional: Redis Commander for Redis management (Web UI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: aihub_redis_commander
+    environment:
+      REDIS_HOSTS: local:redis:6379
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    networks:
+      - aihub_network
+    profiles:
+      - tools  # Only starts if you explicitly want it
+
+volumes:
+  postgres_data:
+  redis_data:
+  pgadmin_data:
+
+networks:
+  aihub_network:
+    driver: bridge

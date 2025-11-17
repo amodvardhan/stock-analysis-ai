@@ -1,0 +1,63 @@
+# =============================================================================
+# AI Hub - Python 3.13 Compatible Dependencies
+# =============================================================================
+
+# Web Framework
+fastapi==0.115.0
+uvicorn[standard]==0.32.0
+pydantic==2.9.2
+pydantic-settings==2.6.0
+email-validator==2.2.0        # Email validation for Pydantic
+
+# Database & ORM
+sqlalchemy==2.0.35
+alembic==1.13.3
+greenlet==3.1.1               # Required for SQLAlchemy async support
+
+# Use psycopg instead of psycopg2-binary (Python 3.13 compatible)
+psycopg[binary]==3.2.3  # New version, Python 3.13 compatible
+asyncpg==0.30.0  # Latest version with Python 3.13 support
+
+# Note: pgvector requires asyncpg/psycopg2, may need workaround
+pgvector==0.3.5
+
+# Redis & Celery
+redis==5.2.0
+celery==5.4.0
+flower==2.0.1
+
+# AI/LLM
+langchain==0.3.7
+langchain-openai==0.2.8
+langchain-community==0.3.7
+langgraph==0.2.45
+langsmith==0.1.142
+openai==1.54.4
+litellm==1.51.2
+
+# Stock Market Data
+yfinance==0.2.48
+alpha-vantage==2.3.1
+pandas>=2.0.0
+numpy>=1.26.0,<2.0.0
+ta==0.11.0
+
+# Security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.12
+
+# Notifications
+python-dotenv==1.0.1
+emails==0.6
+twilio==9.3.7
+
+# Monitoring
+prometheus-fastapi-instrumentator==7.0.0
+structlog==24.4.0
+sentry-sdk[fastapi]==2.17.0
+
+# Utilities
+httpx==0.27.2
+python-dateutil==2.9.0
+schedule==1.2.2

@@ -1,0 +1,68 @@
+# =============================================================================
+# AI Hub - Docker Compose Configuration
+# =============================================================================
+# This file orchestrates all services needed for the AI Hub:
+# - PostgreSQL: Main database for users, portfolios, stock data
+# - Redis: Caching layer and message broker
+# - FastAPI Backend: Python API server with AI agents
+# =============================================================================
+
+version: '3.8'
+
+services:
+  # PostgreSQL Database with Vector Extension
+  postgres:
+    image: ankane/pgvector:latest  # PostgreSQL with pgvector for embeddings
+    container_name: aihub_postgres
+    environment:
+      POSTGRES_USER: aihub_user
+      POSTGRES_PASSWORD: aihub_password_2025  # Change in production
+      POSTGRES_DB: aihub_stock_intelligence
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aihub_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis for Caching and Message Queue
+  redis:
+    image: redis:7-alpine
+    container_name: aihub_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # FastAPI Backend (will be built from Dockerfile)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aihub_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://aihub_user:aihub_password_2025@postgres:5432/aihub_stock_intelligence
+      - REDIS_URL=redis://redis:6379
+      - ENVIRONMENT=development
+    volumes:
+      - ./backend:/app  # Mount for hot reload during development
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+volumes:
+  postgres_data:
+  redis_data:
