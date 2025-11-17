@@ -59,11 +59,13 @@ class SentimentAnalysisAgent(BaseAgent):
         try:
             logger.info("sentiment_analysis_started", symbol=symbol)
             
-            # Call the tool correctly using ainvoke()
-            sentiment_data = await analyze_sentiment.ainvoke({
+            # Call tool with dict input
+            tool_input = {
                 "symbol": symbol,
                 "company_name": company_name
-            })
+            }
+            
+            sentiment_data = await analyze_sentiment.ainvoke(tool_input)
             
             if "error" in sentiment_data:
                 raise Exception(sentiment_data["error"])

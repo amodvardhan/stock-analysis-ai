@@ -59,11 +59,13 @@ class FundamentalAnalysisAgent(BaseAgent):
         try:
             logger.info("fundamental_analysis_started", symbol=symbol, market=market)
             
-            # Call the tool correctly using ainvoke()
-            fundamental_data = await get_fundamental_data.ainvoke({
+            # Call tool with dict input
+            tool_input = {
                 "symbol": symbol,
                 "market": market
-            })
+            }
+            
+            fundamental_data = await get_fundamental_data.ainvoke(tool_input)
             
             if "error" in fundamental_data:
                 raise Exception(fundamental_data["error"])

@@ -60,12 +60,14 @@ class TechnicalAnalysisAgent(BaseAgent):
         try:
             logger.info("technical_analysis_started", symbol=symbol, market=market)
             
-            # Call the tool correctly using invoke() instead of __call__()
-            indicators_data = await calculate_technical_indicators.ainvoke({
+            # Call tool with dict input (NOT keyword arguments)
+            tool_input = {
                 "symbol": symbol,
                 "market": market,
                 "period": "3mo"
-            })
+            }
+            
+            indicators_data = await calculate_technical_indicators.ainvoke(tool_input)
             
             if "error" in indicators_data:
                 raise Exception(indicators_data["error"])
