@@ -42,6 +42,8 @@ celery_app = Celery(
         "tasks.stock_tasks",
         "tasks.notification_tasks",
         "tasks.portfolio_tasks",
+        "tasks.watchlist_tasks",      
+        "tasks.maintenance_tasks",  
     ]
 )
 

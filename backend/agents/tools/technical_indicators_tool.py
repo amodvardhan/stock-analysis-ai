@@ -19,6 +19,7 @@ Dependencies:
 
 from typing import Dict, Any
 import pandas as pd
+import numpy as np  # ← ADD THIS LINE
 from langchain_core.tools import tool
 from ta.trend import EMAIndicator, MACD
 from ta.momentum import RSIIndicator
@@ -29,6 +30,32 @@ from datetime import datetime
 from agents.tools.stock_price_tool import get_stock_price
 
 logger = structlog.get_logger()
+
+
+def convert_numpy_types(obj: Any) -> Any:
+    """
+    Convert numpy types to Python native types for msgpack serialization.
+    
+    LangGraph uses msgpack which doesn't support numpy types.
+    This recursively converts numpy.float64, numpy.int64, etc. to float, int.
+    
+    Args:
+        obj: Object potentially containing numpy types
+    
+    Returns:
+        Object with numpy types converted to Python native types
+    """
+    if isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.ndarray):
+        return obj.tolist()
+    elif isinstance(obj, dict):
+        return {key: convert_numpy_types(value) for key, value in obj.items()}
+    elif isinstance(obj, list):
+        return [convert_numpy_types(item) for item in obj]
+    return obj
 
 
 @tool
@@ -232,10 +259,11 @@ async def calculate_technical_indicators(
             confidence=confidence
         )
         
+        # Convert numpy types before returning to avoid msgpack serialization errors
         return {
             "symbol": symbol,
             "analyzed_at": datetime.utcnow().isoformat(),
-            "indicators": indicators
+            "indicators": convert_numpy_types(indicators) 
         }
         
     except Exception as e:

@@ -140,3 +140,6 @@ Thumbs.db
 # Keep alembic/ directory but ignore version files if needed
 # alembic/versions/*.pyc
 
+
+
+
