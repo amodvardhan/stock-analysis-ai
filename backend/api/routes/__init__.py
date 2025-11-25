@@ -27,14 +27,20 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 # AI-powered stock recommendations
 api_router.include_router(recommendations.router, prefix="/recommendations", tags=["Recommendations"])
 
-# Market data endpoints (new)
+# Market data endpoints - Core features only
 api_router.include_router(market.router, prefix="/market", tags=["Market Data"])
 
-# New professional features
-api_router.include_router(backtesting.router, prefix="/backtesting", tags=["Backtesting"])
-api_router.include_router(orders.router, prefix="/orders", tags=["Orders"])
+# ============================================================================
+# ADVANCED FEATURES - Hidden from main API for beginner-friendly experience
+# These are kept for internal use and can be re-enabled if needed
+# ============================================================================
+# Uncomment to enable advanced features:
+# api_router.include_router(backtesting.router, prefix="/backtesting", tags=["Backtesting"])
+# api_router.include_router(orders.router, prefix="/orders", tags=["Orders"])
+# api_router.include_router(risk.router, prefix="/risk", tags=["Risk Management"])
+
+# Security & Explainability - Keep enabled (used by core features)
 api_router.include_router(security.router, prefix="/security", tags=["Security"])
-api_router.include_router(risk.router, prefix="/risk", tags=["Risk Management"])
 api_router.include_router(explainability.router, prefix="/explainability", tags=["AI Explainability"])
 
 __all__ = ["api_router"]

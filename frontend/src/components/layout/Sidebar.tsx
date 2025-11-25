@@ -1,24 +1,15 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, TrendingUp, Briefcase, Eye, Sparkles, BarChart3, ShoppingCart, Shield, Globe, Activity, Newspaper, PieChart, Target, FileText, Users, Calendar } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, Briefcase, Eye, Sparkles } from 'lucide-react'
 
+// Simplified navigation - Focus on core investment features
+// Removed: Options, Backtesting, Corporate Actions, Earnings, Peer Comparison, separate Market pages
+// Integrated: Market Overview/Movers/Sectors → Dashboard, Financials/News → Stock Analysis, Risk → Portfolio
 const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/analysis', icon: TrendingUp, label: 'Stock Analysis' },
     { to: '/recommendations', icon: Sparkles, label: 'AI Recommendations' },
-    { to: '/market-overview', icon: Globe, label: 'Market Overview' },
-    { to: '/market-movers', icon: Activity, label: 'Market Movers' },
-    { to: '/sectors', icon: PieChart, label: 'Sector Analysis' },
-    { to: '/news', icon: Newspaper, label: 'News Feed' },
-    { to: '/options', icon: Target, label: 'Options Chain' },
-    { to: '/financials', icon: FileText, label: 'Financials' },
-    { to: '/compare', icon: Users, label: 'Peer Comparison' },
-    { to: '/corporate-actions', icon: Calendar, label: 'Corporate Actions' },
-    { to: '/earnings', icon: Calendar, label: 'Earnings Calendar' },
     { to: '/portfolio', icon: Briefcase, label: 'Portfolio' },
     { to: '/watchlist', icon: Eye, label: 'Watchlist' },
-    { to: '/backtesting', icon: BarChart3, label: 'Backtesting' },
-    { to: '/orders', icon: ShoppingCart, label: 'Orders' },
-    { to: '/risk', icon: Shield, label: 'Risk Dashboard' },
 ]
 
 export const Sidebar = () => {

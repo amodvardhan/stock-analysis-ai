@@ -166,41 +166,36 @@ async def get_news(
         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Options Chain Endpoints
-@router.get("/options/{symbol}")
-async def get_options_chain(
-    symbol: str,
-    market: str = Query(default="india_nse", description="Market identifier"),
-    expiration_date: Optional[str] = Query(default=None, description="Expiration date (YYYY-MM-DD)"),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get options chain analysis for a stock.
-    
-    Returns:
-        - Options chain data (calls and puts)
-        - Greeks and metrics
-        - Strategy recommendations
-        - AI insights
-    """
-    try:
-        result = await OptionsService.get_options_analysis(
-            symbol=symbol,
-            market=market,
-            expiration_date=expiration_date
-        )
-        
-        if "error" in result:
-            raise HTTPException(status_code=500, detail=result["error"])
-        
-        return result
-        
-    except Exception as e:
-        logger.error("options_endpoint_error", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+# ============================================================================
+# ADVANCED FEATURES - Hidden for beginner-friendly experience
+# Uncomment to enable these endpoints
+# ============================================================================
+
+# Options Chain Endpoints (ADVANCED - Not for beginners)
+# Hidden from main API - Uncomment decorator and function to enable
+# @router.get("/options/{symbol}")
+# async def get_options_chain(
+#     symbol: str,
+#     market: str = Query(default="india_nse", description="Market identifier"),
+#     expiration_date: Optional[str] = Query(default=None, description="Expiration date (YYYY-MM-DD)"),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Get options chain analysis for a stock."""
+#     try:
+#         result = await OptionsService.get_options_analysis(
+#             symbol=symbol,
+#             market=market,
+#             expiration_date=expiration_date
+#         )
+#         if "error" in result:
+#             raise HTTPException(status_code=500, detail=result["error"])
+#         return result
+#     except Exception as e:
+#         logger.error("options_endpoint_error", error=str(e))
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Financials Endpoints
+# Financials Endpoints (CORE - Used by Stock Analysis)
 @router.get("/financials/{symbol}")
 async def get_financial_analysis(
     symbol: str,
@@ -252,7 +247,7 @@ class CompareStocksRequest(BaseModel):
     symbols: List[str]
 
 
-# Peer Comparison Endpoints
+# Peer Comparison Endpoints (USEFUL - Keep enabled, can be used in Stock Analysis)
 @router.post("/compare")
 async def compare_stocks(
     request: CompareStocksRequest,
@@ -314,96 +309,70 @@ async def compare_stocks(
         raise HTTPException(status_code=500, detail=f"Comparison failed: {str(e)}")
 
 
-# Corporate Actions Endpoints
-@router.get("/corporate-actions/{symbol}")
-async def get_corporate_actions(
-    symbol: str,
-    market: str = Query(default="india_nse", description="Market identifier"),
-    action_type: str = Query(default="all", description="Type: dividend, split, all"),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get corporate actions for a stock.
-    
-    Returns:
-        - Dividend history
-        - Stock split history
-        - Upcoming events
-    """
-    try:
-        result = await CorporateActionsService.get_corporate_actions(
-            symbol=symbol,
-            market=market,
-            action_type=action_type
-        )
-        
-        if "error" in result:
-            raise HTTPException(status_code=500, detail=result["error"])
-        
-        return result
-        
-    except Exception as e:
-        logger.error("corporate_actions_endpoint_error", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+# Corporate Actions Endpoints (ADVANCED - Not essential for beginners)
+# Hidden from main API - Uncomment to enable
+# @router.get("/corporate-actions/{symbol}")
+# async def get_corporate_actions(
+#     symbol: str,
+#     market: str = Query(default="india_nse", description="Market identifier"),
+#     action_type: str = Query(default="all", description="Type: dividend, split, all"),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Get corporate actions for a stock."""
+#     try:
+#         result = await CorporateActionsService.get_corporate_actions(
+#             symbol=symbol,
+#             market=market,
+#             action_type=action_type
+#         )
+#         if "error" in result:
+#             raise HTTPException(status_code=500, detail=result["error"])
+#         return result
+#     except Exception as e:
+#         logger.error("corporate_actions_endpoint_error", error=str(e))
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
-# Earnings Calendar Endpoints
-@router.get("/earnings")
-async def get_earnings_calendar(
-    market: str = Query(default="india_nse", description="Market identifier"),
-    days_ahead: int = Query(default=30, ge=1, le=90, description="Days to look ahead"),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get earnings calendar.
-    
-    Returns:
-        - Upcoming earnings announcements
-        - Earnings dates
-        - Estimated EPS
-    """
-    try:
-        result = await EarningsService.get_earnings_calendar(
-            market=market,
-            days_ahead=days_ahead
-        )
-        
-        if "error" in result:
-            raise HTTPException(status_code=500, detail=result["error"])
-        
-        return result
-        
-    except Exception as e:
-        logger.error("earnings_calendar_endpoint_error", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+# Earnings Calendar Endpoints (ADVANCED - Can be shown in News/Overview)
+# Hidden from main API - Uncomment to enable
+# @router.get("/earnings")
+# async def get_earnings_calendar(
+#     market: str = Query(default="india_nse", description="Market identifier"),
+#     days_ahead: int = Query(default=30, ge=1, le=90, description="Days to look ahead"),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Get earnings calendar."""
+#     try:
+#         result = await EarningsService.get_earnings_calendar(
+#             market=market,
+#             days_ahead=days_ahead
+#         )
+#         if "error" in result:
+#             raise HTTPException(status_code=500, detail=result["error"])
+#         return result
+#     except Exception as e:
+#         logger.error("earnings_calendar_endpoint_error", error=str(e))
+#         raise HTTPException(status_code=500, detail=str(e))
 
 
-# IPO Calendar Endpoints
-@router.get("/ipos")
-async def get_ipo_calendar(
-    market: str = Query(default="india_nse", description="Market identifier"),
-    days_ahead: int = Query(default=90, ge=1, le=180, description="Days to look ahead"),
-    current_user: User = Depends(get_current_user)
-):
-    """
-    Get IPO calendar.
-    
-    Returns:
-        - Upcoming IPOs
-        - Recent IPOs
-    """
-    try:
-        result = await EarningsService.get_ipo_calendar(
-            market=market,
-            days_ahead=days_ahead
-        )
-        
-        if "error" in result:
-            raise HTTPException(status_code=500, detail=result["error"])
-        
-        return result
-        
-    except Exception as e:
-        logger.error("ipo_calendar_endpoint_error", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+# IPO Calendar Endpoints (ADVANCED - Not essential)
+# Hidden from main API - Uncomment to enable
+# @router.get("/ipos")
+# async def get_ipo_calendar(
+#     market: str = Query(default="india_nse", description="Market identifier"),
+#     days_ahead: int = Query(default=90, ge=1, le=180, description="Days to look ahead"),
+#     current_user: User = Depends(get_current_user)
+# ):
+#     """Get IPO calendar."""
+#     try:
+#         result = await EarningsService.get_ipo_calendar(
+#             market=market,
+#             days_ahead=days_ahead
+#         )
+#         if "error" in result:
+#             raise HTTPException(status_code=500, detail=result["error"])
+#         return result
+#     except Exception as e:
+#         logger.error("ipo_calendar_endpoint_error", error=str(e))
+#         raise HTTPException(status_code=500, detail=str(e))
 

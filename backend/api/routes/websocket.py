@@ -36,7 +36,7 @@ class ConnectionManager:
         
     async def connect(self, websocket: WebSocket, user_id: str):
         """Register a new WebSocket connection."""
-        await websocket.accept()
+        # Note: websocket.accept() is called in websocket_endpoint before this
         
         if user_id not in self.active_connections:
             self.active_connections[user_id] = set()
@@ -82,7 +82,11 @@ class ConnectionManager:
     async def send_price_update(self, websocket: WebSocket, symbol: str, market: str):
         """Send price update to a specific connection."""
         try:
-            price_data = await get_stock_price(symbol=symbol, market=market, period="1d")
+            price_data = await get_stock_price.ainvoke({
+                "symbol": symbol,
+                "market": market,
+                "period": "1d"
+            })
             
             message = {
                 "type": "price_update",
@@ -131,7 +135,11 @@ class ConnectionManager:
                 # Update prices for each subscription
                 for subscription_key, websockets in all_subscriptions.items():
                     symbol, market = subscription_key.split(":", 1)
-                    price_data = await get_stock_price(symbol=symbol, market=market, period="1d")
+                    price_data = await get_stock_price.ainvoke({
+                        "symbol": symbol,
+                        "market": market,
+                        "period": "1d"
+                    })
                     
                     message = {
                         "type": "price_update",
@@ -193,15 +201,39 @@ async def websocket_endpoint(websocket: WebSocket, token: str = None):
     3. Unsubscribe: {"action": "unsubscribe", "symbol": "RELIANCE", "market": "india_nse"}
     4. Receive updates: {"type": "price_update", "symbol": "...", "current_price": ...}
     """
+    # Accept connection first (required before sending/reading)
+    try:
+        await websocket.accept()
+        logger.info("websocket_connection_accepted", client=websocket.client.host if websocket.client else "unknown")
+    except Exception as e:
+        logger.error("websocket_accept_failed", error=str(e))
+        return
+    
     try:
         # Authenticate user
         if not token:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            logger.warning("websocket_auth_failed", reason="no_token_provided")
+            try:
+                await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="No token provided")
+            except:
+                pass
             return
         
         user = await get_current_user_ws(token)
         if not user:
-            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            logger.warning("websocket_auth_failed", reason="invalid_token_or_user_not_found", token_preview=token[:20] + "..." if len(token) > 20 else token)
+            try:
+                await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="Invalid token or user not found")
+            except:
+                pass
+            return
+        
+        if not user.is_active:
+            logger.warning("websocket_auth_failed", reason="user_inactive", user_id=str(user.id))
+            try:
+                await websocket.close(code=status.WS_1008_POLICY_VIOLATION, reason="User account is inactive")
+            except:
+                pass
             return
         
         # Connect

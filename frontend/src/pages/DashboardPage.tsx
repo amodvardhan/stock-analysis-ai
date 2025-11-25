@@ -1,11 +1,52 @@
-import { useEffect, useState } from 'react'
-import { TrendingUp, Briefcase, Eye, Clock, Sparkles, ArrowRight } from 'lucide-react'
+import { useEffect, useState, useMemo } from 'react'
+import { TrendingUp, Briefcase, Eye, Clock, Sparkles, ArrowRight, Globe, Activity, TrendingDown, Wifi, WifiOff } from 'lucide-react'
 import { useAuthStore } from '@/stores/authStore'
 import { useNavigate } from 'react-router-dom'
+import { marketService } from '@/api/marketService'
+import { toast } from 'react-hot-toast'
+import { useWebSocket } from '../hooks/useWebSocket'
+import { formatPrice, formatPriceLocale, getCurrencySymbol } from '../utils/currency'
 
 export const DashboardPage = () => {
     const user = useAuthStore((state) => state.user)
     const navigate = useNavigate()
+    const [marketOverview, setMarketOverview] = useState<any>(null)
+    const [marketMovers, setMarketMovers] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
+    const [market, setMarket] = useState('india_nse')
+
+    // Extract symbols for WebSocket subscription
+    const symbols = useMemo(() => {
+        if (!marketMovers) return []
+        const allStocks = [
+            ...(marketMovers.gainers || []),
+            ...(marketMovers.losers || [])
+        ]
+        return [...new Set(allStocks.map((stock: any) => stock.symbol))]
+    }, [marketMovers])
+
+    // Connect to WebSocket for real-time price updates
+    const { isConnected, priceUpdates } = useWebSocket(symbols, market)
+
+    useEffect(() => {
+        loadMarketData()
+    }, [])
+
+    const loadMarketData = async () => {
+        try {
+            setLoading(true)
+            const [overview, movers] = await Promise.all([
+                marketService.getMarketOverview(market, true, true).catch(() => null),
+                marketService.getMarketMovers(market, 'all', 5).catch(() => null)
+            ])
+            setMarketOverview(overview)
+            setMarketMovers(movers)
+        } catch (error: any) {
+            toast.error('Failed to load market data')
+        } finally {
+            setLoading(false)
+        }
+    }
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -40,7 +81,7 @@ export const DashboardPage = () => {
                     <div className="relative z-10 flex items-center justify-between">
                         <div>
                             <p className="text-success-100 text-sm font-medium mb-1">Portfolio Value</p>
-                            <p className="text-3xl lg:text-4xl font-bold">₹0</p>
+                            <p className="text-3xl lg:text-4xl font-bold">{getCurrencySymbol(market)}0</p>
                         </div>
                         <div className="w-12 h-12 lg:w-14 lg:h-14 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
                             <Briefcase className="w-6 h-6 lg:w-7 lg:h-7" />
@@ -73,8 +114,140 @@ export const DashboardPage = () => {
                 </div>
             </div>
 
+            {/* Market Overview - Integrated */}
+            {marketOverview && (
+                <div className="card animate-slide-up" style={{ animationDelay: '400ms' }}>
+                    <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                        <Globe className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Market Overview</h2>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                            {isConnected ? (
+                                <>
+                                    <Wifi className="w-4 h-4 text-green-500" />
+                                    <span className="text-green-600 dark:text-green-400">Live</span>
+                                </>
+                            ) : (
+                                <>
+                                    <WifiOff className="w-4 h-4 text-gray-400" />
+                                    <span className="text-gray-500 dark:text-gray-400">Connecting...</span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                    
+                    {/* Key Indices */}
+                    {marketOverview.indices && (
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            {Object.entries(marketOverview.indices).slice(0, 3).map(([name, data]: [string, any]) => (
+                                <div key={name} className="p-4 bg-gradient-to-br from-gray-50 to-gray-100 dark:from-slate-800 dark:to-slate-700 rounded-lg border border-gray-200 dark:border-slate-600">
+                                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{name}</p>
+                                    <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">
+                                        {formatPriceLocale(data.value, market, { maximumFractionDigits: 0 })}
+                                    </p>
+                                    <div className={`flex items-center gap-1 mt-1 ${data.change_percent >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                                        {data.change_percent >= 0 ? (
+                                            <TrendingUp className="w-4 h-4" />
+                                        ) : (
+                                            <TrendingDown className="w-4 h-4" />
+                                        )}
+                                        <span className="text-sm font-semibold">
+                                            {data.change_percent >= 0 ? '+' : ''}{data.change_percent?.toFixed(2)}%
+                                        </span>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Top Movers */}
+                    {marketMovers && (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Top Gainers */}
+                            {marketMovers.gainers && marketMovers.gainers.length > 0 && (
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                                        <TrendingUp className="w-5 h-5 text-success-600" />
+                                        Top Gainers
+                                    </h3>
+                                    <div className="space-y-2">
+                                        {marketMovers.gainers.slice(0, 3).map((stock: any, idx: number) => {
+                                            const liveUpdate = priceUpdates.get(stock.symbol)
+                                            const current_price = liveUpdate?.current_price ?? stock.current_price
+                                            const change_percent = liveUpdate?.change_percent ?? stock.change_percent
+                                            
+                                            return (
+                                            <div key={idx} className="flex items-center justify-between p-3 bg-success-50 dark:bg-success-900/20 rounded-lg">
+                                                <div>
+                                                    <p className="font-semibold text-gray-900 dark:text-gray-100">{stock.symbol}</p>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400">{stock.company_name}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-bold text-success-600 dark:text-success-400">
+                                                            +{change_percent?.toFixed(2)}%
+                                                    </p>
+                                                        <div className="flex items-center justify-end gap-2">
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                                {formatPrice(current_price, market)}
+                                                    </p>
+                                                            {liveUpdate && (
+                                                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Live price"></div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Top Losers */}
+                            {marketMovers.losers && marketMovers.losers.length > 0 && (
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center gap-2">
+                                        <TrendingDown className="w-5 h-5 text-danger-600" />
+                                        Top Losers
+                                    </h3>
+                                    <div className="space-y-2">
+                                        {marketMovers.losers.slice(0, 3).map((stock: any, idx: number) => {
+                                            const liveUpdate = priceUpdates.get(stock.symbol)
+                                            const current_price = liveUpdate?.current_price ?? stock.current_price
+                                            const change_percent = liveUpdate?.change_percent ?? stock.change_percent
+                                            
+                                            return (
+                                            <div key={idx} className="flex items-center justify-between p-3 bg-danger-50 dark:bg-danger-900/20 rounded-lg">
+                                                <div>
+                                                    <p className="font-semibold text-gray-900 dark:text-gray-100">{stock.symbol}</p>
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400">{stock.company_name}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="font-bold text-danger-600 dark:text-danger-400">
+                                                            {change_percent?.toFixed(2)}%
+                                                    </p>
+                                                        <div className="flex items-center justify-end gap-2">
+                                                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                                                                {formatPrice(current_price, market)}
+                                                    </p>
+                                                            {liveUpdate && (
+                                                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Live price"></div>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
             {/* Getting Started */}
-            <div className="card animate-slide-up" style={{ animationDelay: '400ms' }}>
+            <div className="card animate-slide-up" style={{ animationDelay: '500ms' }}>
                 <div className="flex items-center gap-3 mb-6">
                     <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
                         <Sparkles className="w-5 h-5 text-white" />

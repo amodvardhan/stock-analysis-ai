@@ -1,13 +1,25 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { watchlistService } from '../api/watchlistService';
 import { WatchlistItem, WatchlistCreateRequest } from '../types';
 import { toast } from 'react-hot-toast';
-import { Eye, Bell, Target, TrendingUp } from 'lucide-react';
+import { Eye, Bell, Target, TrendingUp, TrendingDown, Wifi, WifiOff } from 'lucide-react';
+import { useWebSocket } from '../hooks/useWebSocket';
+import { formatPrice, formatPriceChange, getCurrencySymbol } from '../utils/currency';
 
 const WatchlistPage: React.FC = () => {
     const [items, setItems] = useState<WatchlistItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAdd, setShowAdd] = useState(false);
+
+    // Extract symbols and markets for WebSocket subscription
+    const symbols = useMemo(() => items.map(item => item.stock.symbol), [items]);
+    const markets = useMemo(() => {
+        const uniqueMarkets = [...new Set(items.map(item => item.stock.market))];
+        return uniqueMarkets.length > 0 ? uniqueMarkets[0] : 'india_nse';
+    }, [items]);
+
+    // Connect to WebSocket for real-time price updates
+    const { isConnected, priceUpdates } = useWebSocket(symbols, markets);
 
     const load = async () => {
         try {
@@ -75,6 +87,23 @@ const WatchlistPage: React.FC = () => {
                     <span className="text-lg">+</span>
                     Add Stock
                 </button>
+            </div>
+
+            {/* Real-time Connection Status */}
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-sm">
+                    {isConnected ? (
+                        <>
+                            <Wifi className="w-4 h-4 text-green-500" />
+                            <span className="text-green-600 dark:text-green-400">Live prices active</span>
+                        </>
+                    ) : (
+                        <>
+                            <WifiOff className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-500 dark:text-gray-400">Connecting to live prices...</span>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Stats Cards */}
@@ -156,6 +185,8 @@ const WatchlistPage: React.FC = () => {
                                         key={item.id}
                                         item={item}
                                         onRemove={handleRemove}
+                                        livePriceUpdate={priceUpdates.get(item.stock.symbol)}
+                                        isConnected={isConnected}
                                     />
                                 ))}
                             </tbody>
@@ -200,13 +231,33 @@ const MetricCard: React.FC<MetricCardProps> = ({ title, value, icon, gradient = 
 interface WatchlistRowProps {
     item: WatchlistItem;
     onRemove: (id: number, symbol: string) => void;
+    livePriceUpdate?: {
+        type: 'price_update';
+        symbol: string;
+        market: string;
+        current_price: number;
+        previous_close: number;
+        change: number;
+        change_percent: number;
+        timestamp: string;
+    };
+    isConnected: boolean;
 }
 
-const WatchlistRow: React.FC<WatchlistRowProps> = ({ item, onRemove }) => {
+const WatchlistRow: React.FC<WatchlistRowProps> = ({ item, onRemove, livePriceUpdate, isConnected }) => {
     const marketDisplay = item.stock.market
         .split('_')
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
+
+    // Use live price if available, otherwise use initial price
+    const current_price = livePriceUpdate?.current_price ?? item.stock.current_price;
+
+    // Get price change from live update if available
+    const priceChange = livePriceUpdate?.change ?? 0;
+    const priceChangePercent = livePriceUpdate?.change_percent ?? 0;
+
+    const market = item.stock.market;
 
     return (
         <tr className="table-row">
@@ -220,12 +271,43 @@ const WatchlistRow: React.FC<WatchlistRowProps> = ({ item, onRemove }) => {
                 <span className="badge badge-primary">{marketDisplay}</span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right">
-                {item.stock.current_price != null ? (
-                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
-                        ₹{item.stock.current_price.toFixed(2)}
-                    </span>
+                {current_price != null ? (
+                    <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
+                                {formatPrice(current_price, market)}
+                            </span>
+                            {livePriceUpdate && (
+                                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Live price"></div>
+                            )}
+                        </div>
+                        {livePriceUpdate && (
+                            <span className={`text-xs font-medium flex items-center gap-1 ${priceChange >= 0
+                                ? 'text-success-600 dark:text-success-400'
+                                : 'text-danger-600 dark:text-danger-400'
+                                }`}>
+                                {priceChange >= 0 ? (
+                                    <TrendingUp className="w-3 h-3" />
+                                ) : (
+                                    <TrendingDown className="w-3 h-3" />
+                                )}
+                                <span>
+                                    {priceChangePercent >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}% ({formatPriceChange(priceChange, market)})
+                                </span>
+                            </span>
+                        )}
+                    </div>
                 ) : (
-                    <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
+                    <div className="flex flex-col items-end gap-1">
+                        {isConnected ? (
+                            <>
+                                <span className="text-sm text-gray-400 dark:text-gray-500 italic">Loading price...</span>
+                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" title="Waiting for price data"></div>
+                            </>
+                        ) : (
+                            <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
+                        )}
+                    </div>
                 )}
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
@@ -246,7 +328,7 @@ const WatchlistRow: React.FC<WatchlistRowProps> = ({ item, onRemove }) => {
                         <div className="flex items-center gap-1 text-xs">
                             <TrendingUp className="w-3 h-3 text-success-600 dark:text-success-400" />
                             <span className="text-success-700 dark:text-success-300 font-medium">
-                                Buy ≤ ₹{item.target_buy_price.toFixed(2)}
+                                Buy ≤ {formatPrice(item.target_buy_price, market)}
                             </span>
                         </div>
                     )}
@@ -254,7 +336,7 @@ const WatchlistRow: React.FC<WatchlistRowProps> = ({ item, onRemove }) => {
                         <div className="flex items-center gap-1 text-xs">
                             <Target className="w-3 h-3 text-danger-600 dark:text-danger-400" />
                             <span className="text-danger-700 dark:text-danger-300 font-medium">
-                                Sell ≥ ₹{item.target_sell_price.toFixed(2)}
+                                Sell ≥ {formatPrice(item.target_sell_price, market)}
                             </span>
                         </div>
                     )}
@@ -416,7 +498,7 @@ const AddWatchlistModal: React.FC<AddWatchlistModalProps> = ({
                         <div>
                             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                 <TrendingUp className="w-4 h-4 text-success-600 dark:text-success-400" />
-                                Target Buy Price (₹)
+                                Target Buy Price ({getCurrencySymbol(form.market)})
                             </label>
                             <input
                                 type="number"
@@ -432,7 +514,7 @@ const AddWatchlistModal: React.FC<AddWatchlistModalProps> = ({
                         <div>
                             <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                 <Target className="w-4 h-4 text-danger-600 dark:text-danger-400" />
-                                Target Sell Price (₹)
+                                Target Sell Price ({getCurrencySymbol(form.market)})
                             </label>
                             <input
                                 type="number"

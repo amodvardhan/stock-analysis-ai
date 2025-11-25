@@ -1,13 +1,29 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { marketService, MarketMovers, MarketMover } from '../api/marketService'
 import { toast } from 'react-hot-toast'
-import { TrendingUp, TrendingDown, Activity, ArrowUp, ArrowDown, Sparkles } from 'lucide-react'
+import { TrendingUp, TrendingDown, Activity, ArrowUp, ArrowDown, Sparkles, Wifi, WifiOff } from 'lucide-react'
+import { useWebSocket } from '../hooks/useWebSocket'
+import { formatPrice, formatPriceChange } from '../utils/currency'
 
 export const MarketMoversPage = () => {
     const [movers, setMovers] = useState<MarketMovers | null>(null)
     const [loading, setLoading] = useState(true)
     const [market, setMarket] = useState('india_nse')
     const [activeTab, setActiveTab] = useState<'gainers' | 'losers' | 'active'>('gainers')
+
+    // Extract symbols for WebSocket subscription
+    const symbols = useMemo(() => {
+        if (!movers) return []
+        const allStocks = [
+            ...movers.gainers,
+            ...movers.losers,
+            ...movers.most_active
+        ]
+        return [...new Set(allStocks.map(stock => stock.symbol))]
+    }, [movers])
+
+    // Connect to WebSocket for real-time price updates
+    const { isConnected, priceUpdates } = useWebSocket(symbols, market)
 
     useEffect(() => {
         loadMovers()
@@ -72,6 +88,23 @@ export const MarketMoversPage = () => {
                     <option value="us_nyse">US NYSE</option>
                     <option value="us_nasdaq">US NASDAQ</option>
                 </select>
+            </div>
+
+            {/* Real-time Connection Status */}
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-sm">
+                    {isConnected ? (
+                        <>
+                            <Wifi className="w-4 h-4 text-green-500" />
+                            <span className="text-green-600 dark:text-green-400">Live prices active</span>
+                        </>
+                    ) : (
+                        <>
+                            <WifiOff className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-500 dark:text-gray-400">Connecting to live prices...</span>
+                        </>
+                    )}
+                </div>
             </div>
 
             {/* Tabs */}
@@ -143,7 +176,13 @@ export const MarketMoversPage = () => {
                                     </tr>
                                 </thead>
                                 <tbody className="bg-white dark:bg-slate-900 divide-y divide-gray-200 dark:divide-slate-700">
-                                    {getCurrentData().map((stock, index) => (
+                                    {getCurrentData().map((stock, index) => {
+                                        const liveUpdate = priceUpdates.get(stock.symbol)
+                                        const current_price = liveUpdate?.current_price ?? stock.current_price
+                                        const change = liveUpdate?.change ?? stock.change
+                                        const change_percent = liveUpdate?.change_percent ?? stock.change_percent
+                                        
+                                        return (
                                         <tr
                                             key={stock.symbol}
                                             className="hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
@@ -158,39 +197,45 @@ export const MarketMoversPage = () => {
                                                 {stock.company_name}
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900 dark:text-gray-100 text-right">
-                                                ₹{stock.current_price.toFixed(2)}
+                                                    <div className="flex items-center justify-end gap-2">
+                                                        {formatPrice(current_price, market)}
+                                                        {liveUpdate && (
+                                                            <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" title="Live price"></div>
+                                                        )}
+                                                    </div>
                                             </td>
                                             <td
                                                 className={`px-6 py-4 whitespace-nowrap text-sm font-semibold text-right ${
-                                                    stock.change >= 0
+                                                        change >= 0
                                                         ? 'text-success-600 dark:text-success-400'
                                                         : 'text-danger-600 dark:text-danger-400'
                                                 }`}
                                             >
                                                 <div className="flex items-center justify-end gap-1">
-                                                    {stock.change >= 0 ? (
+                                                        {change >= 0 ? (
                                                         <TrendingUp className="w-4 h-4" />
                                                     ) : (
                                                         <TrendingDown className="w-4 h-4" />
                                                     )}
-                                                    {stock.change >= 0 ? '+' : ''}₹{Math.abs(stock.change).toFixed(2)}
+                                                        {formatPriceChange(change, market)}
                                                 </div>
                                             </td>
                                             <td
                                                 className={`px-6 py-4 whitespace-nowrap text-sm font-bold text-right ${
-                                                    stock.change_percent >= 0
+                                                        change_percent >= 0
                                                         ? 'text-success-600 dark:text-success-400'
                                                         : 'text-danger-600 dark:text-danger-400'
                                                 }`}
                                             >
-                                                {stock.change_percent >= 0 ? '+' : ''}
-                                                {stock.change_percent.toFixed(2)}%
+                                                    {change_percent >= 0 ? '+' : ''}
+                                                    {change_percent.toFixed(2)}%
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600 dark:text-gray-400 text-right">
                                                 {stock.volume.toLocaleString()}
                                             </td>
                                         </tr>
-                                    ))}
+                                        )
+                                    })}
                                 </tbody>
                             </table>
                         </div>

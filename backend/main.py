@@ -44,7 +44,7 @@ Environment Variables Required:
 
 from contextlib import asynccontextmanager
 from typing import Dict, Any
-from fastapi import FastAPI, Request, status
+from fastapi import FastAPI, Request, status, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import JSONResponse
@@ -375,6 +375,9 @@ async def global_exception_handler(request: Request, exc: Exception):
     """
     Global exception handler for all unhandled errors.
     
+    Note: This handler does NOT catch WebSocket exceptions.
+    WebSocket errors are handled within the WebSocket endpoint.
+    
     Args:
         request: The incoming HTTP request
         exc: The exception that was raised
@@ -382,6 +385,10 @@ async def global_exception_handler(request: Request, exc: Exception):
     Returns:
         JSONResponse: Standardized error response
     """
+    # Skip WebSocket requests - they have their own error handling
+    if request.url.path.startswith("/ws"):
+        raise exc
+    
     logger.error(
         "unhandled_exception",
         exc_type=type(exc).__name__,
@@ -417,8 +424,13 @@ app.include_router(api_router, prefix="/api/v1")
 from api.routes.websocket import websocket_endpoint
 
 @app.websocket("/ws")
-async def websocket_route(websocket, token: str = None):
+async def websocket_route(websocket: WebSocket, token: str = None):
     """WebSocket endpoint for real-time stock price updates."""
+    # Extract token from query parameters if not provided
+    if not token:
+        query_params = dict(websocket.query_params)
+        token = query_params.get("token")
+    
     await websocket_endpoint(websocket, token)
 
 

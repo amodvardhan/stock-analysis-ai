@@ -6,6 +6,7 @@ import { TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, Sparkles, Cal
 import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
 import { HeatMap } from '@/components/charts';
 import { useWebSocket } from '../hooks/useWebSocket';
+import { formatPrice, formatPriceChange } from '../utils/currency';
 
 const RecommendationsPage: React.FC = () => {
     const [period, setPeriod] = useState<'daily' | 'weekly'>('daily');
@@ -242,6 +243,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation,
     const current_price = livePriceUpdate?.current_price ?? initialPrice;
     const priceChange = livePriceUpdate?.change ?? 0;
     const priceChangePercent = livePriceUpdate?.change_percent ?? (historical_performance?.['1d_change'] ?? 0);
+    const market = recommendation.market || 'india_nse';
 
     // Animate price changes
     useEffect(() => {
@@ -285,24 +287,28 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation,
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className={`text-3xl font-bold transition-all duration-300 ${priceAnimation === 'up' ? 'text-green-300 scale-110' :
-                            priceAnimation === 'down' ? 'text-red-300 scale-110' :
-                                'text-white'
-                            }`}>
-                            ₹{current_price.toFixed(2)}
+                        <div className="flex items-center justify-end gap-2 mb-1">
+                            <div className={`text-3xl font-bold transition-all duration-300 ${priceAnimation === 'up' ? 'text-green-300 scale-110' :
+                                priceAnimation === 'down' ? 'text-red-300 scale-110' :
+                                    'text-white'
+                                }`}>
+                                {formatPrice(current_price, market)}
+                            </div>
                             {livePriceUpdate && (
-                                <span className={`ml-2 text-lg ${priceChange >= 0 ? 'text-green-200' : 'text-red-200'
-                                    }`}>
-                                    {priceChange >= 0 ? '↑' : '↓'}
-                                </span>
+                                <div className="w-3 h-3 bg-green-300 rounded-full animate-pulse" title="Live price"></div>
                             )}
                         </div>
                         <div className="text-white/90 text-sm">
-                            {livePriceUpdate ? (
+                            {livePriceUpdate && priceChange !== 0 ? (
                                 <span className={`flex items-center gap-1 justify-end ${priceChangePercent >= 0 ? 'text-green-200' : 'text-red-200'
                                     }`}>
                                     {priceChangePercent >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                                    {Math.abs(priceChangePercent).toFixed(2)}% ({priceChange >= 0 ? '+' : ''}₹{Math.abs(priceChange).toFixed(2)})
+                                    {priceChangePercent >= 0 ? '+' : ''}{priceChangePercent.toFixed(2)}% ({formatPriceChange(priceChange, market)})
+                                </span>
+                            ) : livePriceUpdate ? (
+                                <span className="flex items-center gap-1 justify-end text-green-200">
+                                    <div className="w-2 h-2 bg-green-300 rounded-full animate-pulse"></div>
+                                    Live
                                 </span>
                             ) : (
                                 'Current Price'
@@ -359,7 +365,7 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation,
                             <YAxis stroke="#6b7280" />
                             <Tooltip
                                 contentStyle={{ backgroundColor: '#fff', border: '1px solid #e5e7eb', borderRadius: '8px' }}
-                                formatter={(value: number) => [`₹${value.toFixed(2)}`, 'Price']}
+                                formatter={(value: number) => [formatPrice(value, market), 'Price']}
                             />
                             <Area
                                 type="monotone"
@@ -403,11 +409,11 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation,
                 <div className="mt-4 grid grid-cols-2 gap-4">
                     <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">52W High</p>
-                        <p className="font-semibold text-gray-900 dark:text-gray-100">₹{historical_performance.high_52w.toFixed(2)}</p>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">{formatPrice(historical_performance.high_52w, market)}</p>
                     </div>
                     <div>
                         <p className="text-sm text-gray-600 dark:text-gray-400">52W Low</p>
-                        <p className="font-semibold text-gray-900 dark:text-gray-100">₹{historical_performance.low_52w.toFixed(2)}</p>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">{formatPrice(historical_performance.low_52w, market)}</p>
                     </div>
                 </div>
             </div>
@@ -421,14 +427,14 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation,
                 <div className="grid grid-cols-2 gap-4">
                     <div className="p-4 bg-success-50 dark:bg-success-900/20 rounded-lg border border-success-200 dark:border-success-800">
                         <p className="text-sm text-success-700 dark:text-success-300 mb-1">7-Day Forecast</p>
-                        <p className="text-2xl font-bold text-success-900 dark:text-success-200">₹{forecast.price_7d.toFixed(2)}</p>
+                        <p className="text-2xl font-bold text-success-900 dark:text-success-200">{formatPrice(forecast.price_7d, market)}</p>
                         <p className={`text-sm font-semibold ${forecast.expected_change_7d >= 0 ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'}`}>
                             {forecast.expected_change_7d >= 0 ? '+' : ''}{forecast.expected_change_7d.toFixed(2)}%
                         </p>
                     </div>
                     <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
                         <p className="text-sm text-primary-700 dark:text-primary-300 mb-1">30-Day Forecast</p>
-                        <p className="text-2xl font-bold text-primary-900 dark:text-primary-200">₹{forecast.price_30d.toFixed(2)}</p>
+                        <p className="text-2xl font-bold text-primary-900 dark:text-primary-200">{formatPrice(forecast.price_30d, market)}</p>
                         <p className={`text-sm font-semibold ${forecast.expected_change_30d >= 0 ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'}`}>
                             {forecast.expected_change_30d >= 0 ? '+' : ''}{forecast.expected_change_30d.toFixed(2)}%
                         </p>
