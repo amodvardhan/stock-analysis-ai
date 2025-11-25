@@ -5,7 +5,7 @@ API Routes package initialization.
 from fastapi import APIRouter
 from api.routes import (
     auth, analysis, portfolio, stocks, notifications, watchlist, recommendations,
-    backtesting, orders, security, risk, explainability
+    backtesting, orders, security, risk, explainability, market
 )
 
 # Create main API router
@@ -26,6 +26,9 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 
 # AI-powered stock recommendations
 api_router.include_router(recommendations.router, prefix="/recommendations", tags=["Recommendations"])
+
+# Market data endpoints (new)
+api_router.include_router(market.router, prefix="/market", tags=["Market Data"])
 
 # New professional features
 api_router.include_router(backtesting.router, prefix="/backtesting", tags=["Backtesting"])

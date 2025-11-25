@@ -13,6 +13,15 @@ import RecommendationsPage from '@/pages/RecommendationsPage'
 import { BacktestingPage } from '@/pages/BacktestingPage'
 import { OrdersPage } from '@/pages/OrdersPage'
 import { RiskDashboardPage } from '@/pages/RiskDashboardPage'
+import { MarketOverviewPage } from '@/pages/MarketOverviewPage'
+import { MarketMoversPage } from '@/pages/MarketMoversPage'
+import { NewsFeedPage } from '@/pages/NewsFeedPage'
+import { SectorAnalysisPage } from '@/pages/SectorAnalysisPage'
+import { OptionsChainPage } from '@/pages/OptionsChainPage'
+import { FinancialsPage } from '@/pages/FinancialsPage'
+import { PeerComparisonPage } from '@/pages/PeerComparisonPage'
+import { CorporateActionsPage } from '@/pages/CorporateActionsPage'
+import { EarningsCalendarPage } from '@/pages/EarningsCalendarPage'
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -47,6 +56,15 @@ function App() {
                     <Route path="backtesting" element={<BacktestingPage />} />
                     <Route path="orders" element={<OrdersPage />} />
                     <Route path="risk" element={<RiskDashboardPage />} />
+                    <Route path="market-overview" element={<MarketOverviewPage />} />
+                    <Route path="market-movers" element={<MarketMoversPage />} />
+                    <Route path="news" element={<NewsFeedPage />} />
+                    <Route path="sectors" element={<SectorAnalysisPage />} />
+                    <Route path="options" element={<OptionsChainPage />} />
+                    <Route path="financials" element={<FinancialsPage />} />
+                    <Route path="compare" element={<PeerComparisonPage />} />
+                    <Route path="corporate-actions" element={<CorporateActionsPage />} />
+                    <Route path="earnings" element={<EarningsCalendarPage />} />
 
                 </Route>
             </Routes>
