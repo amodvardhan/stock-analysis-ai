@@ -223,14 +223,28 @@ async def get_financial_analysis(
             market=market
         )
         
-        if "error" in result:
-            raise HTTPException(status_code=500, detail=result["error"])
+        if not result:
+            raise HTTPException(status_code=500, detail="Financial analysis service returned empty result")
+        
+        # Only raise error if we have no useful data
+        if "error" in result and result["error"]:
+            if "financial_statements" not in result and "key_ratios" not in result:
+                raise HTTPException(status_code=500, detail=result["error"])
+            # If we have partial data, include the error but don't fail
         
         return result
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error("financials_endpoint_error", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_trace = traceback.format_exc()
+        logger.error("financials_endpoint_error", 
+                    error=str(e), 
+                    error_type=type(e).__name__,
+                    traceback=error_trace,
+                    symbol=symbol)
+        raise HTTPException(status_code=500, detail=f"Financial analysis failed: {str(e)}")
 
 
 # Peer Comparison Models
@@ -255,27 +269,49 @@ async def compare_stocks(
     """
     try:
         symbols = request.symbols
+        if not symbols or not isinstance(symbols, list):
+            raise HTTPException(status_code=400, detail="Symbols must be a list")
+        
         if len(symbols) < 2:
             raise HTTPException(status_code=400, detail="At least 2 symbols required for comparison")
         
         if len(symbols) > 10:
             raise HTTPException(status_code=400, detail="Maximum 10 symbols allowed for comparison")
         
+        # Validate symbols are strings
+        symbols = [str(s).upper().strip() for s in symbols if s]
+        if len(symbols) < 2:
+            raise HTTPException(status_code=400, detail="At least 2 valid symbols required")
+        
+        logger.info("peer_comparison_request", symbols=symbols, market=market)
+        
         result = await PeerComparisonService.compare_stocks(
             symbols=symbols,
             market=market
         )
         
-        if "error" in result:
-            raise HTTPException(status_code=500, detail=result["error"])
+        if not result:
+            raise HTTPException(status_code=500, detail="Comparison service returned empty result")
+        
+        if "error" in result and result["error"]:
+            logger.error("peer_comparison_result_has_error", error=result["error"], symbols=symbols)
+            # Don't raise 500 if we have partial data
+            if "comparison" not in result and "best_performers" not in result:
+                raise HTTPException(status_code=500, detail=result["error"])
         
         return result
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error("peer_comparison_endpoint_error", error=str(e))
-        raise HTTPException(status_code=500, detail=str(e))
+        import traceback
+        error_trace = traceback.format_exc()
+        logger.error("peer_comparison_endpoint_error", 
+                    error=str(e), 
+                    error_type=type(e).__name__,
+                    traceback=error_trace,
+                    symbols=symbols if 'symbols' in locals() else None)
+        raise HTTPException(status_code=500, detail=f"Comparison failed: {str(e)}")
 
 
 # Corporate Actions Endpoints

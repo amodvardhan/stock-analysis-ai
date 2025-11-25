@@ -8,6 +8,7 @@ Service layer for peer comparison functionality.
 
 from typing import Dict, Any, List
 import structlog
+from datetime import datetime
 
 from agents.peer_comparison_agent import PeerComparisonAgent
 from core.redis_client import cache
@@ -56,9 +57,19 @@ class PeerComparisonService:
             return result
             
         except Exception as e:
-            logger.error("peer_comparison_service_error", symbols=symbols, error=str(e))
+            import traceback
+            error_trace = traceback.format_exc()
+            logger.error("peer_comparison_service_error", 
+                       symbols=symbols, 
+                       error=str(e),
+                       error_type=type(e).__name__,
+                       traceback=error_trace)
             return {
                 "error": str(e),
-                "symbols": symbols
+                "symbols": symbols,
+                "comparison": {"symbols": [], "metrics": {}},
+                "best_performers": {},
+                "insights": f"Comparison failed: {str(e)}",
+                "timestamp": datetime.utcnow().isoformat()
             }
 

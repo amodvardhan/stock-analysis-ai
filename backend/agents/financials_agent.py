@@ -75,16 +75,44 @@ class FinancialsAgent(BaseAgent):
                 }
             
             # Get fundamental data for additional context
-            fundamental = await get_fundamental_data(symbol=symbol, market=market)
+            try:
+                fundamental = await get_fundamental_data.ainvoke({
+                    "symbol": symbol,
+                    "market": market
+                })
+                
+                # Ensure fundamental has the expected structure
+                if "fundamental_details" not in fundamental:
+                    fundamental["fundamental_details"] = {}
+            except Exception as e:
+                logger.warning("fundamental_data_fetch_failed_in_financials", symbol=symbol, error=str(e))
+                fundamental = {"fundamental_details": {}}
             
             # Calculate financial health score
-            health_score = self._calculate_health_score(financials, fundamental)
+            try:
+                health_score = self._calculate_health_score(financials, fundamental)
+            except Exception as e:
+                logger.error("health_score_calculation_failed", symbol=symbol, error=str(e))
+                health_score = {
+                    "score": 50,
+                    "grade": "C",
+                    "strengths": ["Unable to calculate health score"],
+                    "weaknesses": []
+                }
             
             # Generate AI insights
-            insights = await self._generate_financial_insights(financials, fundamental, symbol)
+            try:
+                insights = await self._generate_financial_insights(financials, fundamental, symbol)
+            except Exception as e:
+                logger.error("financial_insights_generation_failed", symbol=symbol, error=str(e))
+                insights = "Financial analysis completed. Detailed insights unavailable."
             
             # Year-over-year analysis
-            yoy_analysis = self._analyze_yoy(financials)
+            try:
+                yoy_analysis = self._analyze_yoy(financials)
+            except Exception as e:
+                logger.error("yoy_analysis_failed", symbol=symbol, error=str(e))
+                yoy_analysis = {}
             
             result = {
                 "symbol": symbol,
@@ -127,8 +155,8 @@ class FinancialsAgent(BaseAgent):
         strengths = []
         weaknesses = []
         
-        ratios = financials.get("key_ratios", {})
-        fund_details = fundamental.get("fundamental_details", {})
+        ratios = financials.get("key_ratios", {}) if financials else {}
+        fund_details = fundamental.get("fundamental_details", {}) if fundamental else {}
         
         # Profitability
         if ratios.get("roe") and ratios["roe"] > 0.15:

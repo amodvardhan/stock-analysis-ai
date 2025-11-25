@@ -65,8 +65,28 @@ class PeerComparisonAgent(BaseAgent):
             stocks_data = []
             for symbol in symbols:
                 try:
-                    price_data = await get_stock_price(symbol=symbol, market=market, period="1y")
-                    fundamental_data = await get_fundamental_data(symbol=symbol, market=market)
+                    price_data = await get_stock_price.ainvoke({
+                        "symbol": symbol,
+                        "market": market,
+                        "period": "1y"
+                    })
+                    
+                    # Skip if price data has error
+                    if price_data.get("error"):
+                        logger.warning("price_data_has_error", symbol=symbol, error=price_data.get("error"))
+                        continue
+                    
+                    fundamental_data = await get_fundamental_data.ainvoke({
+                        "symbol": symbol,
+                        "market": market
+                    })
+                    
+                    # Skip if fundamental data has error (but allow fallback data)
+                    if fundamental_data.get("error") and fundamental_data.get("data_source") != "fallback_demo":
+                        logger.warning("fundamental_data_has_error", symbol=symbol, error=fundamental_data.get("error"))
+                        # Still include it but with empty fundamental_details
+                        if "fundamental_details" not in fundamental_data:
+                            fundamental_data["fundamental_details"] = {}
                     
                     stocks_data.append({
                         "symbol": symbol,
@@ -78,22 +98,38 @@ class PeerComparisonAgent(BaseAgent):
                     continue
             
             if not stocks_data:
+                logger.error("no_stocks_data_available", symbols=symbols)
                 return {
                     "error": "Failed to fetch data for any stocks",
-                    "symbols": symbols
+                    "symbols": symbols,
+                    "comparison": {"symbols": [], "metrics": {}},
+                    "best_performers": {},
+                    "insights": "Unable to fetch data for comparison. Please try again later."
                 }
             
             # Create comparison matrix
-            comparison = self._create_comparison_matrix(stocks_data)
+            try:
+                comparison = self._create_comparison_matrix(stocks_data)
+            except Exception as e:
+                logger.error("comparison_matrix_creation_failed", error=str(e))
+                comparison = {"symbols": [s["symbol"] for s in stocks_data], "metrics": {}}
             
             # Identify best performers
-            best_performers = self._identify_best_performers(stocks_data)
+            try:
+                best_performers = self._identify_best_performers(stocks_data)
+            except Exception as e:
+                logger.error("best_performers_identification_failed", error=str(e))
+                best_performers = {}
             
             # Generate AI insights
-            insights = await self._generate_comparison_insights(stocks_data, comparison)
+            try:
+                insights = await self._generate_comparison_insights(stocks_data, comparison)
+            except Exception as e:
+                logger.error("comparison_insights_generation_failed", error=str(e))
+                insights = "Comparison analysis completed. Detailed insights unavailable."
             
             result = {
-                "symbols": symbols,
+                "symbols": [s["symbol"] for s in stocks_data],
                 "market": market,
                 "comparison": comparison,
                 "best_performers": best_performers,
@@ -101,14 +137,24 @@ class PeerComparisonAgent(BaseAgent):
                 "timestamp": datetime.utcnow().isoformat()
             }
             
-            logger.info("peer_comparison_completed", symbols=symbols)
+            logger.info("peer_comparison_completed", 
+                       symbols=result["symbols"], 
+                       stocks_count=len(stocks_data),
+                       metrics_count=len(comparison.get("metrics", {})))
             return result
             
         except Exception as e:
-            logger.error("peer_comparison_failed", symbols=symbols, error=str(e))
+            import traceback
+            error_trace = traceback.format_exc()
+            logger.error("peer_comparison_failed", 
+                        symbols=symbols, 
+                        error=str(e),
+                        error_type=type(e).__name__,
+                        traceback=error_trace)
             return {
                 "error": str(e),
-                "symbols": symbols
+                "symbols": symbols,
+                "error_type": type(e).__name__
             }
     
     def _create_comparison_matrix(self, stocks_data: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -122,44 +168,44 @@ class PeerComparisonAgent(BaseAgent):
             symbol = stock["symbol"]
             matrix["symbols"].append(symbol)
             
-            price = stock["price_data"]
-            fund = stock["fundamental_data"]
-            fund_details = fund.get("fundamental_details", {})
+            price = stock.get("price_data", {})
+            fund = stock.get("fundamental_data", {})
+            fund_details = fund.get("fundamental_details", {}) if fund else {}
             
-            # Price metrics
+            # Price metrics (safe access with defaults)
             if "current_price" not in matrix["metrics"]:
                 matrix["metrics"]["current_price"] = {}
-            matrix["metrics"]["current_price"][symbol] = price.get("current_price", 0)
+            matrix["metrics"]["current_price"][symbol] = price.get("current_price") if price else None
             
             if "change_percent" not in matrix["metrics"]:
                 matrix["metrics"]["change_percent"] = {}
-            matrix["metrics"]["change_percent"][symbol] = price.get("change_percent", 0)
+            matrix["metrics"]["change_percent"][symbol] = price.get("change_percent") if price else None
             
             # Valuation metrics
-            valuation = fund_details.get("valuation_metrics", {})
+            valuation = fund_details.get("valuation_metrics", {}) if fund_details else {}
             if "pe_ratio" not in matrix["metrics"]:
                 matrix["metrics"]["pe_ratio"] = {}
-            matrix["metrics"]["pe_ratio"][symbol] = valuation.get("pe_ratio")
+            matrix["metrics"]["pe_ratio"][symbol] = valuation.get("pe_ratio") if valuation else None
             
             if "market_cap" not in matrix["metrics"]:
                 matrix["metrics"]["market_cap"] = {}
-            matrix["metrics"]["market_cap"][symbol] = valuation.get("market_cap")
+            matrix["metrics"]["market_cap"][symbol] = valuation.get("market_cap") if valuation else None
             
             # Profitability
-            profitability = fund_details.get("profitability", {})
+            profitability = fund_details.get("profitability", {}) if fund_details else {}
             if "roe" not in matrix["metrics"]:
                 matrix["metrics"]["roe"] = {}
-            matrix["metrics"]["roe"][symbol] = profitability.get("roe")
+            matrix["metrics"]["roe"][symbol] = profitability.get("roe") if profitability else None
             
             if "profit_margins" not in matrix["metrics"]:
                 matrix["metrics"]["profit_margins"] = {}
-            matrix["metrics"]["profit_margins"][symbol] = profitability.get("profit_margins")
+            matrix["metrics"]["profit_margins"][symbol] = profitability.get("profit_margins") if profitability else None
             
             # Growth
-            growth = fund_details.get("growth", {})
+            growth = fund_details.get("growth", {}) if fund_details else {}
             if "revenue_growth" not in matrix["metrics"]:
                 matrix["metrics"]["revenue_growth"] = {}
-            matrix["metrics"]["revenue_growth"][symbol] = growth.get("revenue_growth")
+            matrix["metrics"]["revenue_growth"][symbol] = growth.get("revenue_growth") if growth else None
         
         return matrix
     
@@ -167,26 +213,41 @@ class PeerComparisonAgent(BaseAgent):
         """Identify best performers in each category."""
         best = {}
         
-        # Best price performance
-        best_price = max(
-            stocks_data,
-            key=lambda x: x["price_data"].get("change_percent", 0)
-        )
-        best["price_performance"] = best_price["symbol"]
+        if not stocks_data:
+            return best
         
-        # Best ROE
-        best_roe = max(
-            stocks_data,
-            key=lambda x: x["fundamental_data"].get("fundamental_details", {}).get("profitability", {}).get("roe", 0) or 0
-        )
-        best["roe"] = best_roe["symbol"]
+        # Best price performance (filter out None values)
+        valid_price_stocks = [s for s in stocks_data if s.get("price_data", {}).get("change_percent") is not None]
+        if valid_price_stocks:
+            best_price = max(
+                valid_price_stocks,
+                key=lambda x: x["price_data"].get("change_percent", 0) or 0
+            )
+            best["price_performance"] = best_price["symbol"]
         
-        # Best growth
-        best_growth = max(
-            stocks_data,
-            key=lambda x: x["fundamental_data"].get("fundamental_details", {}).get("growth", {}).get("revenue_growth", 0) or 0
-        )
-        best["revenue_growth"] = best_growth["symbol"]
+        # Best ROE (filter out None values)
+        valid_roe_stocks = [
+            s for s in stocks_data 
+            if s.get("fundamental_data", {}).get("fundamental_details", {}).get("profitability", {}).get("roe") is not None
+        ]
+        if valid_roe_stocks:
+            best_roe = max(
+                valid_roe_stocks,
+                key=lambda x: x.get("fundamental_data", {}).get("fundamental_details", {}).get("profitability", {}).get("roe", 0) or 0
+            )
+            best["roe"] = best_roe["symbol"]
+        
+        # Best growth (filter out None values)
+        valid_growth_stocks = [
+            s for s in stocks_data 
+            if s.get("fundamental_data", {}).get("fundamental_details", {}).get("growth", {}).get("revenue_growth") is not None
+        ]
+        if valid_growth_stocks:
+            best_growth = max(
+                valid_growth_stocks,
+                key=lambda x: x.get("fundamental_data", {}).get("fundamental_details", {}).get("growth", {}).get("revenue_growth", 0) or 0
+            )
+            best["revenue_growth"] = best_growth["symbol"]
         
         return best
     
