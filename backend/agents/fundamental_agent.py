@@ -7,6 +7,7 @@ Analyzes company financials, valuation metrics, and business fundamentals.
 """
 
 from typing import Dict, Any
+from datetime import datetime
 from langchain_core.runnables import RunnableConfig
 import structlog
 
@@ -67,16 +68,37 @@ class FundamentalAnalysisAgent(BaseAgent):
             
             fundamental_data = await get_fundamental_data.ainvoke(tool_input)
             
-            if "error" in fundamental_data:
-                raise Exception(fundamental_data["error"])
+            # Even if there's an error or fallback data, return it gracefully
+            # The orchestrator and recommendation service can handle partial data
+            if "error" in fundamental_data and fundamental_data.get("data_source") != "fallback":
+                logger.warning("fundamental_data_has_error", symbol=symbol, error=fundamental_data.get("error"))
+                # Return a minimal response that allows analysis to continue
+                return {
+                    "agent": "FundamentalAnalyst",
+                    "symbol": symbol,
+                    "fundamental_details": {},
+                    "analyzed_at": datetime.utcnow().isoformat(),
+                    "error": fundamental_data.get("error"),
+                    "note": "Fundamental data unavailable - analysis continues with technical and sentiment data"
+                }
             
             return {
                 "agent": "FundamentalAnalyst",
                 "symbol": symbol,
                 "fundamental_details": fundamental_data.get("fundamental_details", {}),
-                "analyzed_at": fundamental_data.get("analyzed_at")
+                "analyzed_at": fundamental_data.get("analyzed_at"),
+                "data_source": fundamental_data.get("data_source", "yahoo_finance")
             }
             
         except Exception as e:
             logger.error("fundamental_analysis_failed", symbol=symbol, error=str(e))
-            raise Exception(f"Fundamental analysis failed: {str(e)}")
+            # Return graceful error response instead of raising
+            # This allows the orchestrator to continue with other analyses
+            return {
+                "agent": "FundamentalAnalyst",
+                "symbol": symbol,
+                "fundamental_details": {},
+                "analyzed_at": datetime.utcnow().isoformat(),
+                "error": str(e),
+                "note": "Fundamental analysis failed - continuing with available data"
+            }

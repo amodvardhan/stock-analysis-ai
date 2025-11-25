@@ -180,3 +180,63 @@ export interface WatchlistCreateRequest {
     target_sell_price?: number | null;
     notes?: string | null;
 }
+
+// Stock Recommendations Types
+export interface HistoricalPerformance {
+    current_price: number;
+    high_52w: number;
+    low_52w: number;
+    "1d_change": number;  // API returns with alias name
+    "7d_change": number;
+    "30d_change": number;
+    "90d_change": number;
+    volatility: number;
+}
+
+export interface Forecast {
+    price_7d: number;
+    price_30d: number;
+    expected_change_7d: number;
+    expected_change_30d: number;
+    confidence: number;
+    forecast_basis: string;
+}
+
+export interface StockRecommendation {
+    symbol: string;
+    company_name: string;
+    market: string;
+    current_price: number;
+    score: number;
+    recommendation: string;
+    confidence: number;
+    reasoning: string;
+    historical_performance: HistoricalPerformance;
+    forecast: Forecast;
+    technical_indicators: Record<string, any>;
+    fundamental_metrics: Record<string, any>;
+    sentiment_score: number;
+    risk_level: string;
+    price_history: number[];
+    analyzed_at: string;
+    // AI-powered comparative analysis fields
+    rank?: number | null;
+    ai_reasoning?: string | null;
+    market_context?: string | null;
+    comparative_advantages?: string[] | null;
+    risk_factors?: string[] | null;
+    entry_strategy?: string | null;
+    time_horizon?: string | null;
+}
+
+export interface RecommendationsResponse {
+    period: 'daily' | 'weekly';
+    market: string;
+    recommendations: StockRecommendation[];
+    generated_at: string;
+    analysis_metadata: {
+        user_risk_tolerance: string;
+        stocks_analyzed: number;
+        analysis_depth: string;
+    };
+}

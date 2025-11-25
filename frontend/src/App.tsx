@@ -9,6 +9,7 @@ import { AnalysisPage } from '@/pages/AnalysisPage'
 import { Portfolio } from '@/pages/Portfolio'
 import { useAuthStore } from '@/stores/authStore'
 import WatchlistPage from '@/pages/WatchlistPage'
+import RecommendationsPage from '@/pages/RecommendationsPage'
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -37,6 +38,7 @@ function App() {
                     <Route index element={<Navigate to="/dashboard" />} />
                     <Route path="dashboard" element={<DashboardPage />} />
                     <Route path="analysis" element={<AnalysisPage />} />
+                    <Route path="recommendations" element={<RecommendationsPage />} />
                     <Route path="portfolio" element={<Portfolio />} />
                     <Route path="watchlist" element={<WatchlistPage />} />
 

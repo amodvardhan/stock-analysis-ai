@@ -1,62 +1,40 @@
 import { TrendingUp, TrendingDown, Minus, AlertCircle, Calendar, DollarSign, BarChart3, Activity } from 'lucide-react'
-import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts'
-import type { StockAnalysis } from '@/types'
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend, BarChart, Bar } from 'recharts'
 
-interface Props {
-    analysis: StockAnalysis
+interface PreparedData {
+    analysis: any
+    technical: any
+    fundamental: any
+    final_recommendation: any
+    getActionColor: (action: string) => string
+    getActionIcon: (action: string) => string
+    indicatorChartData: any[]
 }
 
-export const AnalysisResult = ({ analysis }: Props) => {
-    const { final_recommendation, analyses, symbol, market } = analysis
-    const technical = analyses?.technical?.indicators
-    const fundamental = analyses?.fundamental?.fundamental_details
-    const sentiment = analyses?.sentiment
+interface Props {
+    preparedData: PreparedData
+}
 
-    const getActionColor = (action: string) => {
-        switch (action) {
-            case 'buy': return 'text-green-600 bg-green-50 border-green-200'
-            case 'sell': return 'text-red-600 bg-red-50 border-red-200'
-            default: return 'text-yellow-600 bg-yellow-50 border-yellow-200'
-        }
-    }
+export const AnalysisResult = ({ preparedData }: Props) => {
+    const {
+        analysis,
+        technical,
+        fundamental,
+        final_recommendation,
+        getActionColor,
+        getActionIcon,
+        indicatorChartData
+    } = preparedData
 
-    const getActionIcon = (action: string) => {
-        switch (action) {
+    const { symbol, market } = analysis
+
+    // Icon rendering helper (presentation logic only)
+    const renderActionIcon = (actionType: string) => {
+        switch (actionType) {
             case 'buy': return <TrendingUp className="w-8 h-8" />
             case 'sell': return <TrendingDown className="w-8 h-8" />
             default: return <Minus className="w-8 h-8" />
         }
-    }
-
-    // Prepare chart data for indicators
-    const prepareIndicatorChartData = () => {
-        if (!technical) return []
-
-        const { ema, rsi, macd, bollinger_bands } = technical
-
-        return [
-            {
-                name: 'Current Price',
-                value: ema?.current_price || 0,
-                ema9: ema?.ema_9 || 0,
-                ema21: ema?.ema_21 || 0,
-                ema50: ema?.ema_50 || 0,
-            }
-        ]
-    }
-
-    const prepareSignalData = () => {
-        if (!technical) return []
-
-        return [
-            {
-                name: 'RSI',
-                value: technical.rsi?.value || 0,
-                threshold: 50,
-                overbought: 70,
-                oversold: 30
-            }
-        ]
     }
 
     return (
@@ -110,7 +88,7 @@ export const AnalysisResult = ({ analysis }: Props) => {
             <div className={`card ${getActionColor(final_recommendation?.action)} border-2`}>
                 <div className="flex items-center gap-4 mb-4">
                     <div className="p-3 bg-white bg-opacity-70 rounded-full">
-                        {getActionIcon(final_recommendation?.action)}
+                        {renderActionIcon(getActionIcon(final_recommendation?.action))}
                     </div>
                     <div className="flex-1">
                         <h3 className="text-3xl font-bold capitalize">{final_recommendation?.action}</h3>
@@ -150,7 +128,7 @@ export const AnalysisResult = ({ analysis }: Props) => {
                         <h4 className="font-semibold mb-3">Moving Averages (EMA)</h4>
                         <div className="bg-gray-50 rounded-lg p-4">
                             <ResponsiveContainer width="100%" height={200}>
-                                <BarChart data={prepareIndicatorChartData()}>
+                                <BarChart data={indicatorChartData}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                     <XAxis dataKey="name" />
                                     <YAxis />

@@ -1,9 +1,10 @@
 import { NavLink, useLocation } from 'react-router-dom'
-import { LayoutDashboard, TrendingUp, Briefcase, Eye } from 'lucide-react'
+import { LayoutDashboard, TrendingUp, Briefcase, Eye, Sparkles } from 'lucide-react'
 
 const navItems = [
     { to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' },
     { to: '/analysis', icon: TrendingUp, label: 'Stock Analysis' },
+    { to: '/recommendations', icon: Sparkles, label: 'AI Recommendations' },
     { to: '/portfolio', icon: Briefcase, label: 'Portfolio' },
     { to: '/watchlist', icon: Eye, label: 'Watchlist' },
 ]

@@ -30,6 +30,12 @@ from agents.fundamental_agent import FundamentalAnalysisAgent
 from agents.sentiment_agent import SentimentAnalysisAgent
 from agents.recommendation_agent import RecommendationAgent
 
+# Note: MarketRecommendationAgent is NOT imported here because:
+# - This orchestrator is for SINGLE stock analysis workflow
+# - MarketRecommendationAgent is for MULTIPLE stocks comparative ranking
+# - It's used in recommendation_service.py AFTER analyzing multiple stocks
+# See AGENT_ARCHITECTURE.md for detailed explanation
+
 logger = structlog.get_logger()
 
 
@@ -148,13 +154,14 @@ async def fundamental_analysis_node(state: StockAnalysisState) -> Dict[str, Any]
     
     try:
         agent = FundamentalAnalysisAgent()
-        # Add timeout per agent (25 seconds max per agent)
+        # Add timeout per agent (40 seconds max per agent to account for retries)
+        # Retries can take up to ~12 seconds (2+4+6), so 40 seconds gives enough buffer
         result = await asyncio.wait_for(
             agent.analyze(
                 symbol=state["symbol"],
                 market=state["market"]
             ),
-            timeout=25.0
+            timeout=40.0
         )
         
         return {"fund_analysis": result}
