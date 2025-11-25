@@ -42,17 +42,23 @@ export const LoginForm = () => {
     }
 
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-primary-50 to-primary-100 p-4">
-            <div className="card max-w-md w-full">
+        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 via-blue-50 to-slate-50 p-4 relative overflow-hidden">
+            {/* Background decoration */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse-slow"></div>
+                <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-20 animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
+            </div>
+            
+            <div className="card max-w-md w-full relative z-10 shadow-xl">
                 <div className="text-center mb-8">
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-primary-600 rounded-full mb-4">
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl mb-4 shadow-lg">
                         <LogIn className="w-8 h-8 text-white" />
                     </div>
-                    <h1 className="text-3xl font-bold text-gray-900">AI Hub</h1>
-                    <p className="text-gray-600 mt-2">Stock Market Intelligence</p>
+                    <h1 className="text-3xl lg:text-4xl font-bold text-gradient mb-2">AI Hub</h1>
+                    <p className="text-gray-600 font-medium">Stock Market Intelligence</p>
                 </div>
 
-                <form onSubmit={handleSubmit} className="space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-5">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Email
@@ -86,7 +92,7 @@ export const LoginForm = () => {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="btn-primary w-full"
+                        className="btn-primary w-full shadow-lg hover:shadow-xl"
                     >
                         {loading ? 'Logging in...' : 'Login'}
                     </button>
@@ -94,7 +100,7 @@ export const LoginForm = () => {
 
                 <p className="mt-6 text-center text-sm text-gray-600">
                     Don't have an account?{' '}
-                    <Link to="/signup" className="text-primary-600 hover:text-primary-700 font-medium">
+                    <Link to="/signup" className="text-primary-600 hover:text-primary-700 font-semibold hover:underline transition-all">
                         Sign up
                     </Link>
                 </p>

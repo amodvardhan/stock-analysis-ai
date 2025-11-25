@@ -92,37 +92,91 @@ export interface StockAnalysis {
 
 // Portfolio Types
 export interface PortfolioHolding {
-    id: number
-    symbol: string
-    company_name: string
-    quantity: number
-    purchase_price: number
-    current_price?: number
-    current_value?: number
-    profit_loss?: number
-    profit_loss_percent?: number
-    purchase_date: string
+    id: number;
+    stock: {
+        id: number;
+        symbol: string;
+        company_name: string;
+        market: string;
+        sector: string | null;
+        industry: string | null;
+    };
+    quantity: number;
+    average_buy_price: number;
+    total_invested: number;
+    current_price: number | null | undefined;
+    current_value: number | null | undefined;
+    unrealized_pl: number | null;
+    unrealized_pl_percentage: number | null;
+    realized_pl: number;
+    first_buy_date: string;
+    last_updated: string;
+}
+
+export interface PortfolioMetrics {
+    id: number;
+    name: string;
+    description: string | null;
+    total_invested: number;
+    current_value: number;
+    total_return: number;
+    return_percentage: number;
+    last_updated: string;
 }
 
 export interface PortfolioSummary {
-    total_holdings: number
-    total_invested: number
-    current_value: number
-    total_profit_loss: number
-    total_profit_loss_percent: number
-    best_performer?: PortfolioHolding
-    worst_performer?: PortfolioHolding
+    portfolio: PortfolioMetrics;
+    holdings: PortfolioHolding[];
+    sector_allocation: Record<string, number>;
+    holdings_count: number;
 }
 
-// Watchlist Types
+export interface AddHoldingRequest {
+    symbol: string;
+    market: string;
+    quantity: number;
+    purchase_price: number;
+    purchase_date?: string;
+    brokerage_fee?: number;
+    tax?: number;
+    notes?: string;
+}
+
+export interface WatchlistStock {
+    id: number;
+    symbol: string;
+    company_name: string;
+    market: string;
+    sector: string | null;
+    industry: string | null;
+    current_price: number | null;
+}
+
 export interface WatchlistItem {
-    id: number
-    symbol: string
-    company_name: string
-    current_price?: number
-    alert_threshold_percent: number
-    target_buy_price?: number
-    target_sell_price?: number
-    notes?: string
-    created_at: string
+    id: number;
+    stock: WatchlistStock;
+    alert_on_price_change: boolean;
+    alert_threshold_percent: number;
+    alert_on_ai_signal: boolean;
+    target_buy_price?: number | null;
+    target_sell_price?: number | null;
+    notes?: string | null;
+    created_at: string;
+    updated_at: string;
+}
+
+export interface WatchlistListResponse {
+    items: WatchlistItem[];
+    count: number;
+}
+
+export interface WatchlistCreateRequest {
+    symbol: string;
+    market: string;
+    alert_on_price_change?: boolean;
+    alert_threshold_percent?: number;
+    alert_on_ai_signal?: boolean;
+    target_buy_price?: number | null;
+    target_sell_price?: number | null;
+    notes?: string | null;
 }

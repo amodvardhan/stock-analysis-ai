@@ -12,8 +12,8 @@ from sqlalchemy import select, and_
 from sqlalchemy.ext.asyncio import AsyncSession
 import structlog
 
-from core.celery_app import celery_app
-from core.database import async_session_maker
+from celery_app import celery_app
+from core.database import AsyncSessionLocal
 from db.models import Stock, StockAnalysis
 from agents.tools.stock_price_tool import get_stock_price
 
@@ -54,7 +54,7 @@ def update_stock_price(self, stock_id: int, symbol: str, market: str):
         
         # Update database
         async def update_db():
-            async with async_session_maker() as session:
+            async with AsyncSessionLocal() as session:
                 result = await session.execute(
                     select(Stock).where(Stock.id == stock_id)
                 )
@@ -105,7 +105,7 @@ def update_all_stock_prices():
         asyncio.set_event_loop(loop)
         
         async def get_stocks():
-            async with async_session_maker() as session:
+            async with AsyncSessionLocal() as session:
                 result = await session.execute(select(Stock))
                 return result.scalars().all()
         
@@ -140,7 +140,7 @@ def cleanup_old_analysis():
         asyncio.set_event_loop(loop)
         
         async def delete_old():
-            async with async_session_maker() as session:
+            async with AsyncSessionLocal() as session:
                 cutoff_date = datetime.utcnow() - timedelta(days=30)
                 result = await session.execute(
                     select(StockAnalysis).where(

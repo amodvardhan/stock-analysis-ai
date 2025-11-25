@@ -1,3 +1,4 @@
+import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast'
 import { LoginForm } from '@/components/auth/LoginForm'
@@ -5,7 +6,9 @@ import { SignupForm } from '@/components/auth/SignupForm'
 import { Layout } from '@/components/layout/Layout'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { AnalysisPage } from '@/pages/AnalysisPage'
+import { Portfolio } from '@/pages/Portfolio'
 import { useAuthStore } from '@/stores/authStore'
+import WatchlistPage from '@/pages/WatchlistPage'
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -34,24 +37,9 @@ function App() {
                     <Route index element={<Navigate to="/dashboard" />} />
                     <Route path="dashboard" element={<DashboardPage />} />
                     <Route path="analysis" element={<AnalysisPage />} />
-                    <Route
-                        path="portfolio"
-                        element={
-                            <div className="card">
-                                <h1 className="text-2xl font-bold">Portfolio</h1>
-                                <p className="text-gray-600 mt-2">Coming soon...</p>
-                            </div>
-                        }
-                    />
-                    <Route
-                        path="watchlist"
-                        element={
-                            <div className="card">
-                                <h1 className="text-2xl font-bold">Watchlist</h1>
-                                <p className="text-gray-600 mt-2">Coming soon...</p>
-                            </div>
-                        }
-                    />
+                    <Route path="portfolio" element={<Portfolio />} />
+                    <Route path="watchlist" element={<WatchlistPage />} />
+
                 </Route>
             </Routes>
         </BrowserRouter>

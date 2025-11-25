@@ -49,30 +49,52 @@ class WatchlistAddRequest(BaseModel):
     """Request to add stock to watchlist."""
     symbol: str = Field(..., min_length=1, max_length=20)
     market: str = Field(default="india_nse")
+    alert_on_price_change: bool = Field(default=True, description="Enable price change alerts")
     alert_threshold_percent: float = Field(
         default=5.0,
         ge=0.1,
         le=50.0,
         description="Price change % that triggers alert"
     )
+    alert_on_ai_signal: bool = Field(default=True, description="Enable AI signal alerts")
     target_buy_price: Optional[float] = Field(None, gt=0)
     target_sell_price: Optional[float] = Field(None, gt=0)
     notes: Optional[str] = Field(None, max_length=1000)
 
 
-class WatchlistResponse(BaseModel):
-    """Response schema for watchlist item."""
+class WatchlistStockResponse(BaseModel):
+    """Stock information in watchlist response."""
     id: int
     symbol: str
     company_name: str
+    market: str
+    sector: Optional[str]
+    industry: Optional[str]
     current_price: Optional[float]
+    
+    model_config = ConfigDict(from_attributes=True)
+
+
+class WatchlistResponse(BaseModel):
+    """Response schema for watchlist item."""
+    id: int
+    stock: WatchlistStockResponse
+    alert_on_price_change: bool
     alert_threshold_percent: float
+    alert_on_ai_signal: bool
     target_buy_price: Optional[float]
     target_sell_price: Optional[float]
     notes: Optional[str]
     created_at: datetime
+    updated_at: datetime
     
     model_config = ConfigDict(from_attributes=True)
+
+
+class WatchlistListResponse(BaseModel):
+    """Response schema for watchlist list."""
+    items: List[WatchlistResponse]
+    count: int
 
 
 class PortfolioAddRequest(BaseModel):

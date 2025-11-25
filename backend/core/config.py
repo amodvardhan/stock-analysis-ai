@@ -56,6 +56,10 @@ class Settings(BaseSettings):
         default=0.1,
         description="LLM temperature (0.0-1.0)"
     )
+    OPENAI_TIMEOUT: int = Field(
+        default=60,
+        description="OpenAI API timeout in seconds"
+    )
     
     # -------------------------
     # Market Data APIs
@@ -123,6 +127,11 @@ class Settings(BaseSettings):
     # API Rate Limiting
     YFINANCE_REQUESTS_PER_HOUR: int = 2000
     CACHE_TTL_SECONDS: int = 3600  # 1 hour
+    
+    # HTTP Request Timeouts (seconds)
+    HTTP_CONNECT_TIMEOUT: int = 5  # Connection timeout
+    HTTP_READ_TIMEOUT: int = 10  # Read timeout
+    HTTP_TOTAL_TIMEOUT: int = 15  # Total request timeout
     
     # -------------------------
     # Pydantic Configuration

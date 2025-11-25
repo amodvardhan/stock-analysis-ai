@@ -34,9 +34,14 @@ export const StockAnalysisForm = ({ onAnalysisComplete }: Props) => {
 
     return (
         <form onSubmit={handleSubmit} className="card">
-            <h2 className="text-xl font-bold mb-6">Analyze Stock</h2>
+            <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
+                    <Search className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl lg:text-2xl font-bold text-gray-900">Analyze Stock</h2>
+            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                         Stock Symbol
@@ -103,7 +108,7 @@ export const StockAnalysisForm = ({ onAnalysisComplete }: Props) => {
             <button
                 type="submit"
                 disabled={loading}
-                className="btn-primary mt-6 w-full md:w-auto flex items-center justify-center gap-2"
+                className="btn-primary mt-6 w-full md:w-auto flex items-center justify-center gap-2 shadow-lg hover:shadow-xl"
             >
                 {loading ? (
                     <>

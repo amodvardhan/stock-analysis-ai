@@ -21,7 +21,7 @@ from datetime import datetime
 from core.database import AsyncSessionLocal
 from db.models import Watchlist, Stock, User, TradingSignal, Notification, NotificationType, NotificationStatus
 from agents.tools import get_stock_price
-from tasks.notification_tasks import send_email_notification
+from tasks.notification_tasks import send_email
 
 logger = structlog.get_logger()
 
@@ -36,11 +36,66 @@ def monitor_all_watchlists():
     """
     logger.info("watchlist_monitoring_started")
     
-    # Run the async function
-    asyncio.run(_monitor_watchlists_async())
-    
-    logger.info("watchlist_monitoring_completed")
-    return {"status": "completed", "timestamp": datetime.utcnow().isoformat()}
+    # Create a new event loop for this task to avoid conflicts with Celery's prefork workers
+    # This ensures each task has its own isolated event loop
+    loop = None
+    old_loop = None
+    try:
+        # Get the current loop (if any) and store it
+        try:
+            old_loop = asyncio.get_event_loop()
+        except RuntimeError:
+            # No event loop exists, which is fine
+            pass
+        
+        # Create and set a new event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        
+        # Run the async function
+        loop.run_until_complete(_monitor_watchlists_async())
+        
+        logger.info("watchlist_monitoring_completed")
+        return {"status": "completed", "timestamp": datetime.utcnow().isoformat()}
+    except Exception as e:
+        logger.error("watchlist_monitoring_failed", error=str(e))
+        raise
+    finally:
+        # Clean up: ensure all async operations are complete before closing the loop
+        if loop:
+            try:
+                # Give any pending operations a chance to complete
+                pending = [t for t in asyncio.all_tasks(loop) if not t.done()]
+                if pending:
+                    # Wait a short time for tasks to complete
+                    loop.run_until_complete(
+                        asyncio.wait(pending, timeout=1.0, return_when=asyncio.ALL_COMPLETED)
+                    )
+                    # Cancel any remaining tasks
+                    for task in pending:
+                        if not task.done():
+                            task.cancel()
+                    # Wait for cancellation
+                    if pending:
+                        loop.run_until_complete(
+                            asyncio.gather(*pending, return_exceptions=True)
+                        )
+            except Exception as cleanup_error:
+                logger.warning("event_loop_cleanup_warning", error=str(cleanup_error))
+            finally:
+                # Close the loop and reset
+                try:
+                    loop.close()
+                except Exception:
+                    pass
+                asyncio.set_event_loop(None)
+                
+                # Restore the old loop if it existed (though it shouldn't in Celery workers)
+                if old_loop and not old_loop.is_closed():
+                    try:
+                        asyncio.set_event_loop(old_loop)
+                    except Exception:
+                        pass
 
 
 async def _monitor_watchlists_async():
@@ -54,40 +109,48 @@ async def _monitor_watchlists_async():
     4. Generate alerts if thresholds are met
     5. Create notifications for users
     """
-    async with AsyncSessionLocal() as db:
-        try:
-            # Fetch all watchlist items with user and stock details
-            result = await db.execute(
-                select(Watchlist, Stock, User)
-                .join(Stock, Watchlist.stock_id == Stock.id)
-                .join(User, Watchlist.user_id == User.id)
-                .where(User.is_active == True)
-            )
-            
-            watchlist_items = result.all()
-            logger.info("watchlist_items_fetched", count=len(watchlist_items))
-            
-            # Group by stock to minimize API calls
-            stocks_to_check = {}
-            for watchlist_item, stock, user in watchlist_items:
-                stock_key = f"{stock.symbol}_{stock.market}"
-                if stock_key not in stocks_to_check:
-                    stocks_to_check[stock_key] = {
-                        "stock": stock,
-                        "watchers": []
-                    }
-                stocks_to_check[stock_key]["watchers"].append((watchlist_item, user))
-            
-            # Check each unique stock
-            for stock_key, data in stocks_to_check.items():
-                await _check_stock_and_alert(db, data["stock"], data["watchers"])
-            
-            await db.commit()
-            
-        except Exception as e:
-            logger.error("watchlist_monitoring_failed", error=str(e))
+    db = None
+    try:
+        # Create a fresh session for this task
+        db = AsyncSessionLocal()
+        
+        # Fetch all watchlist items with user and stock details
+        result = await db.execute(
+            select(Watchlist, Stock, User)
+            .join(Stock, Watchlist.stock_id == Stock.id)
+            .join(User, Watchlist.user_id == User.id)
+            .where(User.is_active == True)
+        )
+        
+        watchlist_items = result.all()
+        logger.info("watchlist_items_fetched", count=len(watchlist_items))
+        
+        # Group by stock to minimize API calls
+        stocks_to_check = {}
+        for watchlist_item, stock, user in watchlist_items:
+            stock_key = f"{stock.symbol}_{stock.market}"
+            if stock_key not in stocks_to_check:
+                stocks_to_check[stock_key] = {
+                    "stock": stock,
+                    "watchers": []
+                }
+            stocks_to_check[stock_key]["watchers"].append((watchlist_item, user))
+        
+        # Check each unique stock
+        for stock_key, data in stocks_to_check.items():
+            await _check_stock_and_alert(db, data["stock"], data["watchers"])
+        
+        await db.commit()
+        
+    except Exception as e:
+        logger.error("watchlist_monitoring_failed", error=str(e))
+        if db:
             await db.rollback()
-            raise
+        raise
+    finally:
+        # Ensure session is properly closed
+        if db:
+            await db.close()
 
 
 async def _check_stock_and_alert(
@@ -218,10 +281,12 @@ Consider analyzing this stock for potential action.
         
         # Send email if user has email notifications enabled
         if user.email_notifications:
-            send_email_notification.delay(
-                user_email=user.email,
+            # Note: send_email expects user_id, not user_email
+            # We'll need to get user_id or update the function signature
+            send_email.delay(
+                user_id=user.id,
                 subject=title,
-                message=message
+                body=message
             )
         
         logger.info(

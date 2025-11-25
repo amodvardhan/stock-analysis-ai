@@ -11,8 +11,8 @@ from datetime import datetime
 from sqlalchemy import select, and_
 import structlog
 
-from core.celery_app import celery_app
-from core.database import async_session_maker
+from celery_app import celery_app
+from core.database import AsyncSessionLocal
 from db.models import User, Notification
 
 logger = structlog.get_logger()

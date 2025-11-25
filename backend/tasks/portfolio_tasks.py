@@ -8,7 +8,7 @@ Handles portfolio value updates and P&L calculations.
 
 import structlog
 
-from core.celery_app import celery_app
+from celery_app import celery_app
 
 logger = structlog.get_logger()
 

@@ -25,6 +25,7 @@ import time
 import random
 
 from core.redis_client import cache
+from core.config import settings
 
 logger = structlog.get_logger()
 ua = UserAgent()
@@ -144,7 +145,7 @@ async def get_stock_price(
             yahoo_symbol = symbol
         
         # Try fetching from Yahoo Finance with retries
-        max_retries = 3
+        max_retries = 2  # Reduced from 3 to 2 for faster failure
         for attempt in range(max_retries):
             try:
                 # Rotate User-Agent to avoid detection
@@ -155,14 +156,21 @@ async def get_stock_price(
                     'Accept-Language': 'en-US,en;q=0.9',
                 })
                 
-                # Add delay between retries
+                # Configure timeouts to prevent hanging requests
+                session.timeout = (
+                    settings.HTTP_CONNECT_TIMEOUT,
+                    settings.HTTP_READ_TIMEOUT
+                )
+                
+                # Add minimal delay between retries (reduced from exponential)
                 if attempt > 0:
-                    delay = 2 ** attempt  # Exponential backoff: 2s, 4s, 8s
+                    delay = 1  # Reduced from exponential backoff to 1 second
                     logger.info("retry_delay", attempt=attempt + 1, delay_seconds=delay)
                     time.sleep(delay)
                 
-                # Fetch data with custom session
+                # Fetch data with custom session (timeout configured in session)
                 ticker = yf.Ticker(yahoo_symbol, session=session)
+                # Session timeout will handle request timeouts
                 hist = ticker.history(period=period)
                 
                 if hist.empty:
@@ -172,12 +180,14 @@ async def get_stock_price(
                     else:
                         raise ValueError(f"No data available for {yahoo_symbol}")
                 
-                # Get current price info
+                # Get current price info (session timeout will handle this)
                 try:
                     info = ticker.info
                     current_price = info.get('currentPrice') or info.get('regularMarketPrice')
                     previous_close = info.get('previousClose')
-                except:
+                except (requests.exceptions.Timeout, Exception) as e:
+                    logger.warning("info_fetch_failed_using_hist", symbol=yahoo_symbol, error=str(e))
+                    # Fallback to historical data
                     current_price = hist['Close'].iloc[-1]
                     previous_close = hist['Close'].iloc[-2] if len(hist) > 1 else current_price
                 
@@ -221,17 +231,25 @@ async def get_stock_price(
                 
                 return result
                 
+            except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as e:
+                logger.warning("request_timeout_or_connection_error", symbol=symbol, error=str(e), attempt=attempt + 1)
+                if attempt < max_retries - 1:
+                    # Minimal delay for timeout/connection errors
+                    time.sleep(0.5)
+                    continue
+                    
             except requests.exceptions.HTTPError as e:
                 if e.response.status_code == 429:
                     logger.warning("rate_limit_encountered", symbol=symbol, attempt=attempt + 1)
                     if attempt < max_retries - 1:
-                        time.sleep(5 * (attempt + 1))  # Longer delay for rate limits
+                        time.sleep(2)  # Reduced from 5 * (attempt + 1) to 2 seconds
                         continue
                 logger.error("http_error_fetching_stock", symbol=symbol, error=str(e), attempt=attempt + 1)
                 
             except Exception as e:
                 logger.error("fetch_attempt_failed", symbol=symbol, error=str(e), attempt=attempt + 1)
                 if attempt < max_retries - 1:
+                    time.sleep(0.5)  # Minimal delay before retry
                     continue
         
         # If all retries failed, use fallback data

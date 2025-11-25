@@ -27,6 +27,13 @@ celery_app = Celery(
     "aihub_tasks",
     broker=settings.REDIS_URL,
     backend=settings.REDIS_URL,
+    include=[
+        "tasks.watchlist_tasks",
+        "tasks.maintenance_tasks",
+        "tasks.notification_tasks",
+        "tasks.portfolio_tasks",
+        "tasks.stock_tasks",
+    ]
 )
 
 # Celery configuration

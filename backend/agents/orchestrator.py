@@ -22,6 +22,7 @@ from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.memory import MemorySaver
 import operator
 import structlog
+import asyncio
 from datetime import datetime
 
 from agents.technical_agent import TechnicalAnalysisAgent
@@ -102,13 +103,26 @@ async def technical_analysis_node(state: StockAnalysisState) -> Dict[str, Any]:
     
     try:
         agent = TechnicalAnalysisAgent()
-        result = await agent.analyze(
-            symbol=state["symbol"],
-            market=state["market"]
+        # Add timeout per agent (25 seconds max per agent)
+        result = await asyncio.wait_for(
+            agent.analyze(
+                symbol=state["symbol"],
+                market=state["market"]
+            ),
+            timeout=25.0
         )
         
         return {"tech_analysis": result}
         
+    except asyncio.TimeoutError:
+        logger.error("technical_node_timeout", symbol=state["symbol"])
+        return {
+            "tech_analysis": {
+                "error": "Technical analysis timed out",
+                "agent": "TechnicalAnalyst"
+            },
+            "errors": [f"Technical analysis timed out after 25 seconds"]
+        }
     except Exception as e:
         logger.error("technical_node_failed", symbol=state["symbol"], error=str(e))
         return {
@@ -134,13 +148,26 @@ async def fundamental_analysis_node(state: StockAnalysisState) -> Dict[str, Any]
     
     try:
         agent = FundamentalAnalysisAgent()
-        result = await agent.analyze(
-            symbol=state["symbol"],
-            market=state["market"]
+        # Add timeout per agent (25 seconds max per agent)
+        result = await asyncio.wait_for(
+            agent.analyze(
+                symbol=state["symbol"],
+                market=state["market"]
+            ),
+            timeout=25.0
         )
         
         return {"fund_analysis": result}
         
+    except asyncio.TimeoutError:
+        logger.error("fundamental_node_timeout", symbol=state["symbol"])
+        return {
+            "fund_analysis": {
+                "error": "Fundamental analysis timed out",
+                "agent": "FundamentalAnalyst"
+            },
+            "errors": [f"Fundamental analysis timed out after 25 seconds"]
+        }
     except Exception as e:
         logger.error("fundamental_node_failed", symbol=state["symbol"], error=str(e))
         return {
@@ -169,13 +196,26 @@ async def sentiment_analysis_node(state: StockAnalysisState) -> Dict[str, Any]:
         company_name = state.get("company_name") or state["symbol"]
         
         agent = SentimentAnalysisAgent()
-        result = await agent.analyze(
-            symbol=state["symbol"],
-            company_name=company_name
+        # Add timeout per agent (25 seconds max per agent)
+        result = await asyncio.wait_for(
+            agent.analyze(
+                symbol=state["symbol"],
+                company_name=company_name
+            ),
+            timeout=25.0
         )
         
         return {"sent_analysis": result}
         
+    except asyncio.TimeoutError:
+        logger.error("sentiment_node_timeout", symbol=state["symbol"])
+        return {
+            "sent_analysis": {
+                "error": "Sentiment analysis timed out",
+                "agent": "SentimentAnalyst"
+            },
+            "errors": [f"Sentiment analysis timed out after 25 seconds"]
+        }
     except Exception as e:
         logger.error("sentiment_node_failed", symbol=state["symbol"], error=str(e))
         return {
@@ -204,12 +244,16 @@ async def recommendation_node(state: StockAnalysisState) -> Dict[str, Any]:
     
     try:
         agent = RecommendationAgent()
-        result = await agent.synthesize(
-            symbol=state["symbol"],
-            technical_analysis=state["tech_analysis"],
-            fundamental_analysis=state["fund_analysis"],
-            sentiment_analysis=state["sent_analysis"],
-            user_risk_tolerance=state.get("user_risk_tolerance", "moderate")
+        # Add timeout for synthesis (15 seconds max)
+        result = await asyncio.wait_for(
+            agent.synthesize(
+                symbol=state["symbol"],
+                technical_analysis=state["tech_analysis"],
+                fundamental_analysis=state["fund_analysis"],
+                sentiment_analysis=state["sent_analysis"],
+                user_risk_tolerance=state.get("user_risk_tolerance", "moderate")
+            ),
+            timeout=15.0
         )
         
         return {
@@ -217,6 +261,16 @@ async def recommendation_node(state: StockAnalysisState) -> Dict[str, Any]:
             "completed_at": datetime.utcnow().isoformat()
         }
         
+    except asyncio.TimeoutError:
+        logger.error("recommendation_node_timeout", symbol=state["symbol"])
+        return {
+            "final_recommendation": {
+                "error": "Recommendation synthesis timed out",
+                "agent": "RecommendationSynthesizer"
+            },
+            "errors": [f"Recommendation synthesis timed out after 15 seconds"],
+            "completed_at": datetime.utcnow().isoformat()
+        }
     except Exception as e:
         logger.error("recommendation_node_failed", symbol=state["symbol"], error=str(e))
         return {

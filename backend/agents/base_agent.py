@@ -51,11 +51,13 @@ class BaseAgent:
         self.model_name = model
         self.temperature = temperature
         
-        # Initialize LLM
+        # Initialize LLM with timeout
         self.llm = ChatOpenAI(
             model=model,
             temperature=temperature,
-            api_key=settings.OPENAI_API_KEY
+            api_key=settings.OPENAI_API_KEY,
+            timeout=settings.OPENAI_TIMEOUT,
+            max_retries=2  # Reduce retries for faster failure
         )
         
         # Create prompt template

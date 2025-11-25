@@ -1,4 +1,4 @@
-import { LogOut, User } from 'lucide-react'
+import { LogOut, User, TrendingUp } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 
@@ -12,25 +12,32 @@ export const Header = () => {
     }
 
     return (
-        <header className="bg-white shadow-sm border-b border-gray-200">
+        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-lg shadow-sm border-b border-gray-200/50">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex justify-between items-center h-16">
-                    <div className="flex items-center">
-                        <h1 className="text-2xl font-bold text-primary-600">AI Hub</h1>
-                        <span className="ml-3 text-sm text-gray-500">Stock Intelligence</span>
+                <div className="flex justify-between items-center h-16 lg:h-20">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl shadow-md">
+                            <TrendingUp className="w-6 h-6 lg:w-7 lg:h-7 text-white" />
+                        </div>
+                        <div>
+                            <h1 className="text-xl lg:text-2xl font-bold text-gradient">AI Hub</h1>
+                            <span className="text-xs lg:text-sm text-gray-500 font-medium">Stock Intelligence</span>
+                        </div>
                     </div>
 
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 text-sm text-gray-700">
-                            <User className="w-4 h-4" />
-                            <span>{user?.full_name}</span>
+                    <div className="flex items-center gap-3 lg:gap-4">
+                        <div className="hidden sm:flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100">
+                            <div className="w-8 h-8 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center">
+                                <User className="w-4 h-4 text-white" />
+                            </div>
+                            <span className="text-sm font-medium text-gray-700">{user?.full_name}</span>
                         </div>
                         <button
                             onClick={handleLogout}
-                            className="flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="flex items-center gap-2 px-3 lg:px-4 py-2 text-sm font-medium text-danger-600 hover:bg-danger-50 rounded-xl transition-all duration-200 hover:shadow-sm active:scale-95"
                         >
                             <LogOut className="w-4 h-4" />
-                            Logout
+                            <span className="hidden sm:inline">Logout</span>
                         </button>
                     </div>
                 </div>
