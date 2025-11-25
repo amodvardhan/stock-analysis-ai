@@ -12,12 +12,12 @@ export const DashboardPage = () => {
             {/* Welcome Section */}
             <div className="mb-8">
                 <div className="flex items-center gap-2 mb-2">
-                    <Sparkles className="w-6 h-6 text-primary-600" />
-                    <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">
+                    <Sparkles className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                    <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100">
                         Welcome back, <span className="text-gradient">{user?.full_name?.split(' ')[0]}</span>!
                     </h1>
                 </div>
-                <p className="text-gray-600 text-lg">
+                <p className="text-gray-600 dark:text-gray-400 text-lg">
                     Here's your stock market intelligence dashboard
                 </p>
             </div>
@@ -79,11 +79,11 @@ export const DashboardPage = () => {
                     <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
                         <Sparkles className="w-5 h-5 text-white" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">Getting Started</h2>
+                    <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Getting Started</h2>
                 </div>
                 <div className="space-y-4">
                     <div 
-                        className="group flex items-start gap-4 p-5 bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 hover:shadow-md transition-all duration-200 cursor-pointer"
+                        className="group flex items-start gap-4 p-5 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/30 dark:to-blue-900/30 rounded-xl border border-primary-100 dark:border-primary-800 hover:shadow-md transition-all duration-200 cursor-pointer"
                         onClick={() => navigate('/analysis')}
                     >
                         <div className="w-10 h-10 bg-gradient-to-br from-primary-600 to-primary-700 text-white rounded-xl flex items-center justify-center flex-shrink-0 font-bold shadow-md group-hover:scale-110 transition-transform">
@@ -91,17 +91,17 @@ export const DashboardPage = () => {
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center justify-between">
-                                <h3 className="font-semibold text-gray-900 mb-1">Analyze Your First Stock</h3>
-                                <ArrowRight className="w-5 h-5 text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Analyze Your First Stock</h3>
+                                <ArrowRight className="w-5 h-5 text-primary-600 dark:text-primary-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Use our AI-powered analysis to get comprehensive insights on any stock
                             </p>
                         </div>
                     </div>
 
                     <div 
-                        className="group flex items-start gap-4 p-5 bg-gradient-to-r from-success-50 to-emerald-50 rounded-xl border border-success-100 hover:shadow-md transition-all duration-200 cursor-pointer"
+                        className="group flex items-start gap-4 p-5 bg-gradient-to-r from-success-50 to-emerald-50 dark:from-success-900/30 dark:to-emerald-900/30 rounded-xl border border-success-100 dark:border-success-800 hover:shadow-md transition-all duration-200 cursor-pointer"
                         onClick={() => navigate('/watchlist')}
                     >
                         <div className="w-10 h-10 bg-gradient-to-br from-success-600 to-success-700 text-white rounded-xl flex items-center justify-center flex-shrink-0 font-bold shadow-md group-hover:scale-110 transition-transform">
@@ -109,17 +109,17 @@ export const DashboardPage = () => {
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center justify-between">
-                                <h3 className="font-semibold text-gray-900 mb-1">Add Stocks to Watchlist</h3>
-                                <ArrowRight className="w-5 h-5 text-success-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Add Stocks to Watchlist</h3>
+                                <ArrowRight className="w-5 h-5 text-success-600 dark:text-success-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Monitor stocks you're interested in and get real-time price alerts
                             </p>
                         </div>
                     </div>
 
                     <div 
-                        className="group flex items-start gap-4 p-5 bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl border border-purple-100 hover:shadow-md transition-all duration-200 cursor-pointer"
+                        className="group flex items-start gap-4 p-5 bg-gradient-to-r from-purple-50 to-violet-50 dark:from-purple-900/30 dark:to-violet-900/30 rounded-xl border border-purple-100 dark:border-purple-800 hover:shadow-md transition-all duration-200 cursor-pointer"
                         onClick={() => navigate('/portfolio')}
                     >
                         <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-purple-700 text-white rounded-xl flex items-center justify-center flex-shrink-0 font-bold shadow-md group-hover:scale-110 transition-transform">
@@ -127,10 +127,10 @@ export const DashboardPage = () => {
                         </div>
                         <div className="flex-1">
                             <div className="flex items-center justify-between">
-                                <h3 className="font-semibold text-gray-900 mb-1">Track Your Portfolio</h3>
-                                <ArrowRight className="w-5 h-5 text-purple-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                <h3 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">Track Your Portfolio</h3>
+                                <ArrowRight className="w-5 h-5 text-purple-600 dark:text-purple-400 opacity-0 group-hover:opacity-100 transition-opacity" />
                             </div>
-                            <p className="text-sm text-gray-600">
+                            <p className="text-sm text-gray-600 dark:text-gray-400">
                                 Add your holdings and track performance with real-time updates
                             </p>
                         </div>

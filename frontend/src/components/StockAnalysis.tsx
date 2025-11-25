@@ -67,11 +67,11 @@ export const StockAnalysis: React.FC = () => {
             </div>
 
             {/* Analysis Form */}
-            <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+            <div className="bg-white dark:bg-slate-800 rounded-lg shadow-md p-6 mb-6">
                 <form onSubmit={handleAnalyze} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Stock Symbol
                             </label>
                             <input
@@ -79,19 +79,19 @@ export const StockAnalysis: React.FC = () => {
                                 value={symbol}
                                 onChange={(e) => setSymbol(e.target.value)}
                                 placeholder="e.g., RELIANCE, AAPL"
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="input-field"
                                 disabled={loading}
                             />
                         </div>
 
                         <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                                 Market
                             </label>
                             <select
                                 value={market}
                                 onChange={(e) => setMarket(e.target.value as any)}
-                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                className="input-field"
                                 disabled={loading}
                             >
                                 <option value="india_nse">NSE (India)</option>

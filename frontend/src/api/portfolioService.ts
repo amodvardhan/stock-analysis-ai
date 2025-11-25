@@ -3,6 +3,14 @@ import { PortfolioSummary, AddHoldingRequest } from '@/types';
 
 export const portfolioService = {
     /**
+     * Get all portfolios
+     */
+    async getPortfolios() {
+        const response = await apiClient.get('/api/v1/portfolio/');
+        return response.data;
+    },
+
+    /**
      * Get complete portfolio summary with holdings and metrics
      */
     async getPortfolioSummary(): Promise<PortfolioSummary> {

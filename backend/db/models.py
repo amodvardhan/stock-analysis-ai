@@ -641,3 +641,142 @@ class Notification(Base):
 
     def __repr__(self) -> str:
         return f"<Notification {self.title} ({self.status})>"
+
+
+# -------------------------
+# Order Types
+# -------------------------
+class OrderType(str, enum.Enum):
+    """Order types."""
+    MARKET = "market"
+    LIMIT = "limit"
+    STOP_LOSS = "stop_loss"
+    STOP_LIMIT = "stop_limit"
+
+
+class OrderStatus(str, enum.Enum):
+    """Order status."""
+    PENDING = "pending"
+    SUBMITTED = "submitted"
+    PARTIALLY_FILLED = "partially_filled"
+    FILLED = "filled"
+    CANCELLED = "cancelled"
+    REJECTED = "rejected"
+    EXPIRED = "expired"
+
+
+# -------------------------
+# Order Model
+# -------------------------
+class Order(Base):
+    """Trading orders."""
+    __tablename__ = "orders"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    stock_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("stocks.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    # Order details
+    order_type: Mapped[OrderType] = mapped_column(SQLEnum(OrderType), nullable=False)
+    side: Mapped[TransactionType] = mapped_column(SQLEnum(TransactionType), nullable=False)  # BUY or SELL
+    quantity: Mapped[int] = mapped_column(Integer, nullable=False)
+    
+    # Price details
+    limit_price: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+    stop_price: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+    
+    # Execution details
+    status: Mapped[OrderStatus] = mapped_column(
+        SQLEnum(OrderStatus),
+        default=OrderStatus.PENDING,
+        nullable=False
+    )
+    filled_quantity: Mapped[int] = mapped_column(Integer, default=0)
+    average_fill_price: Mapped[Optional[float]] = mapped_column(DECIMAL(10, 2), nullable=True)
+    total_filled_value: Mapped[float] = mapped_column(DECIMAL(15, 2), default=0.0)
+    
+    # Fees
+    commission: Mapped[float] = mapped_column(DECIMAL(10, 2), default=0.0)
+    fees: Mapped[float] = mapped_column(DECIMAL(10, 2), default=0.0)
+    
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    submitted_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    filled_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    cancelled_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    expires_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
+    # Metadata
+    notes: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    order_metadata: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+
+    # Relationships
+    user: Mapped["User"] = relationship("User")
+    stock: Mapped["Stock"] = relationship("Stock")
+
+    __table_args__ = (
+        Index("ix_order_status", "status"),
+        Index("ix_order_created_at", "created_at"),
+        Index("ix_order_user_status", "user_id", "status"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<Order {self.order_type} {self.side} {self.quantity} @ {self.limit_price or 'MARKET'}>"
+
+
+# -------------------------
+# KYC Verification Model
+# -------------------------
+class KYCVerification(Base):
+    """KYC/AML verification records."""
+    __tablename__ = "kyc_verifications"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="CASCADE"),
+        nullable=False,
+        unique=True,
+        index=True
+    )
+
+    # Verification status
+    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False)
+    verification_level: Mapped[str] = mapped_column(String(20), default="basic", nullable=False)
+    
+    # Document storage (in production, store in S3 and keep references)
+    documents: Mapped[Optional[dict]] = mapped_column(JSONB, nullable=True)
+    
+    # Verification metadata
+    verified_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    verified_by: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    rejection_reason: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    
+    # AML check results
+    aml_risk_score: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
+    aml_risk_level: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    aml_checked_at: Mapped[Optional[datetime]] = mapped_column(DateTime, nullable=True)
+    
+    # Timestamps
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    # Relationships
+    user: Mapped["User"] = relationship("User")
+
+    def __repr__(self) -> str:
+        return f"<KYCVerification {self.user_id} - {self.status}>"

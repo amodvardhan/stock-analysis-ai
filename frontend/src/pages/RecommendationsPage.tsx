@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { recommendationService } from '../api/recommendationService';
 import { RecommendationsResponse, StockRecommendation } from '../types';
 import { toast } from 'react-hot-toast';
-import { TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, Sparkles, Calendar } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { TrendingUp, TrendingDown, BarChart3, Target, AlertCircle, Sparkles, Calendar, Wifi, WifiOff } from 'lucide-react';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, AreaChart, Area } from 'recharts';
+import { HeatMap } from '@/components/charts';
+import { useWebSocket } from '../hooks/useWebSocket';
 
 const RecommendationsPage: React.FC = () => {
     const [period, setPeriod] = useState<'daily' | 'weekly'>('daily');
@@ -11,6 +13,34 @@ const RecommendationsPage: React.FC = () => {
     const [weeklyData, setWeeklyData] = useState<RecommendationsResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [market, setMarket] = useState('india_nse');
+
+    // Get current recommendations to subscribe to WebSocket
+    const currentData = period === 'daily' ? dailyData : weeklyData;
+    const symbols = useMemo(() => {
+        return currentData?.recommendations.map(rec => rec.symbol) || [];
+    }, [currentData]);
+
+    // Connect to WebSocket for real-time price updates
+    const { isConnected, priceUpdates } = useWebSocket(symbols, market);
+
+    // Prepare heat map data
+    const heatMapData = useMemo(() => {
+        if (!currentData) return [];
+
+        return currentData.recommendations.map(rec => {
+            const liveUpdate = priceUpdates.get(rec.symbol);
+            const changePercent = liveUpdate?.change_percent ?? rec.historical_performance?.['1d_change'] ?? 0;
+
+            return {
+                symbol: rec.symbol,
+                company_name: rec.company_name,
+                sector: rec.fundamental_metrics?.company_profile?.sector || 'Unknown',
+                change_percent: changePercent,
+                volume: rec.fundamental_metrics?.volume || 0,
+                market_cap: rec.fundamental_metrics?.valuation_metrics?.market_cap || 0
+            };
+        });
+    }, [dailyData, weeklyData, period, priceUpdates]);
 
     useEffect(() => {
         loadRecommendations();
@@ -33,8 +63,6 @@ const RecommendationsPage: React.FC = () => {
         }
     };
 
-    const currentData = period === 'daily' ? dailyData : weeklyData;
-
     if (loading && !currentData) {
         return (
             <div className="flex justify-center items-center h-screen">
@@ -49,10 +77,10 @@ const RecommendationsPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <Sparkles className="w-6 h-6 text-primary-600" />
-                        <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">AI Stock Recommendations</h1>
+                        <Sparkles className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                        <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100">AI Stock Recommendations</h1>
                     </div>
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
                         Top 5 stocks based on deep market analysis, technical indicators, and AI-powered insights
                     </p>
                 </div>
@@ -64,7 +92,7 @@ const RecommendationsPage: React.FC = () => {
                     onClick={() => setPeriod('daily')}
                     className={`px-6 py-3 rounded-xl font-semibold transition-all ${period === 'daily'
                         ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-lg'
-                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                        : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700'
                         }`}
                 >
                     <Calendar className="w-4 h-4 inline mr-2" />
@@ -74,7 +102,7 @@ const RecommendationsPage: React.FC = () => {
                     onClick={() => setPeriod('weekly')}
                     className={`px-6 py-3 rounded-xl font-semibold transition-all ${period === 'weekly'
                         ? 'bg-gradient-to-r from-primary-600 to-primary-700 text-white shadow-lg'
-                        : 'bg-white text-gray-700 hover:bg-gray-50 border border-gray-200'
+                        : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-slate-700 border border-gray-200 dark:border-slate-700'
                         }`}
                 >
                     <Calendar className="w-4 h-4 inline mr-2" />
@@ -84,7 +112,7 @@ const RecommendationsPage: React.FC = () => {
 
             {/* Market Selector */}
             <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-700 mb-2">Market</label>
+                <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Market</label>
                 <select
                     value={market}
                     onChange={(e) => setMarket(e.target.value)}
@@ -97,50 +125,86 @@ const RecommendationsPage: React.FC = () => {
                 </select>
             </div>
 
+            {/* Market Heat Map */}
+            {heatMapData.length > 0 && (
+                <div className="card">
+                    <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                        <BarChart3 className="w-6 h-6" />
+                        Market Performance Heat Map
+                    </h2>
+                    <HeatMap data={heatMapData} groupBy="sector" sizeBy="market_cap" height={400} />
+                </div>
+            )}
+
+            {/* Real-time Connection Status */}
+            <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2 text-sm">
+                    {isConnected ? (
+                        <>
+                            <Wifi className="w-4 h-4 text-green-500" />
+                            <span className="text-green-600 dark:text-green-400">Live prices active</span>
+                        </>
+                    ) : (
+                        <>
+                            <WifiOff className="w-4 h-4 text-gray-400" />
+                            <span className="text-gray-500 dark:text-gray-400">Connecting to live prices...</span>
+                        </>
+                    )}
+                </div>
+            </div>
+
             {/* Recommendations Grid */}
             {currentData && currentData.recommendations.length > 0 ? (
                 <div className="grid grid-cols-1 gap-6">
-                    {currentData.recommendations.map((rec, index) => (
-                        <RecommendationCard key={rec.symbol} recommendation={rec} rank={index + 1} />
-                    ))}
+                    {currentData.recommendations.map((rec, index) => {
+                        const liveUpdate = priceUpdates.get(rec.symbol);
+                        return (
+                            <RecommendationCard
+                                key={rec.symbol}
+                                recommendation={rec}
+                                rank={index + 1}
+                                livePriceUpdate={liveUpdate}
+                            />
+                        );
+                    })}
                 </div>
             ) : (
                 <div className="card text-center py-16">
-                    <AlertCircle className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <p className="text-gray-500 font-medium">No recommendations available</p>
-                    <p className="text-sm text-gray-400 mt-2">Please try again later</p>
+                    <AlertCircle className="w-16 h-16 text-gray-400 dark:text-gray-500 mx-auto mb-4" />
+                    <p className="text-gray-500 dark:text-gray-400 font-medium">No recommendations available</p>
+                    <p className="text-sm text-gray-400 dark:text-gray-500 mt-2">Please try again later</p>
                 </div>
             )}
 
             {/* Analysis Metadata */}
             {currentData && (
-                <div className="card bg-gradient-to-r from-primary-50 to-blue-50 border border-primary-100">
+                <div className="card bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/30 dark:to-blue-900/30 border border-primary-100 dark:border-primary-800">
                     <div className="flex items-center gap-2 mb-2">
                         <BarChart3 className="w-5 h-5 text-primary-600" />
-                        <h3 className="font-semibold text-gray-900">Analysis Details</h3>
+                        <h3 className="font-semibold text-gray-900 dark:text-gray-100">Analysis Details</h3>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                         <div>
-                            <p className="text-gray-600">Risk Tolerance</p>
-                            <p className="font-semibold text-gray-900 capitalize">
+                            <p className="text-gray-600 dark:text-gray-400">Risk Tolerance</p>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100 capitalize">
                                 {currentData.analysis_metadata.user_risk_tolerance}
                             </p>
                         </div>
                         <div>
-                            <p className="text-gray-600">Stocks Analyzed</p>
-                            <p className="font-semibold text-gray-900">
+                            <p className="text-gray-600 dark:text-gray-400">Stocks Analyzed</p>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">
                                 {currentData.analysis_metadata.stocks_analyzed}
                             </p>
                         </div>
                         <div>
-                            <p className="text-gray-600">Analysis Depth</p>
-                            <p className="font-semibold text-gray-900 capitalize">
+                            <p className="text-gray-600 dark:text-gray-400">Analysis Depth</p>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100 capitalize">
                                 {currentData.analysis_metadata.analysis_depth}
                             </p>
                         </div>
                         <div>
-                            <p className="text-gray-600">Generated At</p>
-                            <p className="font-semibold text-gray-900">
+                            <p className="text-gray-600 dark:text-gray-400">Generated At</p>
+                            <p className="font-semibold text-gray-900 dark:text-gray-100">
                                 {new Date(currentData.generated_at).toLocaleTimeString()}
                             </p>
                         </div>
@@ -155,13 +219,43 @@ const RecommendationsPage: React.FC = () => {
 interface RecommendationCardProps {
     recommendation: StockRecommendation;
     rank: number;
+    livePriceUpdate?: {
+        type: 'price_update';
+        symbol: string;
+        market: string;
+        current_price: number;
+        previous_close: number;
+        change: number;
+        change_percent: number;
+        timestamp: string;
+    };
 }
 
-const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation, rank }) => {
+const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation, rank, livePriceUpdate }) => {
     const [showDetails, setShowDetails] = useState(false);
-    const { symbol, company_name, current_price, score, recommendation: rec, confidence, reasoning,
+    const [priceAnimation, setPriceAnimation] = useState<'up' | 'down' | null>(null);
+    const { symbol, company_name, current_price: initialPrice, score, recommendation: rec, confidence, reasoning,
         historical_performance, forecast, price_history, risk_level,
         ai_reasoning, market_context, comparative_advantages, risk_factors, entry_strategy, time_horizon } = recommendation;
+
+    // Use live price if available, otherwise use initial price
+    const current_price = livePriceUpdate?.current_price ?? initialPrice;
+    const priceChange = livePriceUpdate?.change ?? 0;
+    const priceChangePercent = livePriceUpdate?.change_percent ?? (historical_performance?.['1d_change'] ?? 0);
+
+    // Animate price changes
+    useEffect(() => {
+        if (livePriceUpdate) {
+            const change = livePriceUpdate.change;
+            if (change > 0) {
+                setPriceAnimation('up');
+                setTimeout(() => setPriceAnimation(null), 1000);
+            } else if (change < 0) {
+                setPriceAnimation('down');
+                setTimeout(() => setPriceAnimation(null), 1000);
+            }
+        }
+    }, [livePriceUpdate?.current_price]);
 
     // Prepare chart data
     const chartData = price_history.map((price, index) => ({
@@ -191,14 +285,35 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation,
                         </div>
                     </div>
                     <div className="text-right">
-                        <div className="text-3xl font-bold">₹{current_price.toFixed(2)}</div>
-                        <div className="text-white/90 text-sm">Current Price</div>
+                        <div className={`text-3xl font-bold transition-all duration-300 ${priceAnimation === 'up' ? 'text-green-300 scale-110' :
+                            priceAnimation === 'down' ? 'text-red-300 scale-110' :
+                                'text-white'
+                            }`}>
+                            ₹{current_price.toFixed(2)}
+                            {livePriceUpdate && (
+                                <span className={`ml-2 text-lg ${priceChange >= 0 ? 'text-green-200' : 'text-red-200'
+                                    }`}>
+                                    {priceChange >= 0 ? '↑' : '↓'}
+                                </span>
+                            )}
+                        </div>
+                        <div className="text-white/90 text-sm">
+                            {livePriceUpdate ? (
+                                <span className={`flex items-center gap-1 justify-end ${priceChangePercent >= 0 ? 'text-green-200' : 'text-red-200'
+                                    }`}>
+                                    {priceChangePercent >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                                    {Math.abs(priceChangePercent).toFixed(2)}% ({priceChange >= 0 ? '+' : ''}₹{Math.abs(priceChange).toFixed(2)})
+                                </span>
+                            ) : (
+                                'Current Price'
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>
 
             {/* Key Metrics */}
-            <div className="p-6 border-b border-gray-200">
+            <div className="p-6 border-b border-gray-200 dark:border-slate-700">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <MetricItem
                         label="Recommendation Score"
@@ -226,9 +341,9 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation,
 
             {/* Price History Chart */}
             {price_history.length > 0 && (
-                <div className="p-6 border-b border-gray-200">
-                    <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                        <BarChart3 className="w-5 h-5 text-primary-600" />
+                <div className="p-6 border-b border-gray-200 dark:border-slate-700">
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                        <BarChart3 className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                         Price History (Last 30 Days)
                     </h4>
                     <ResponsiveContainer width="100%" height={200}>
@@ -260,13 +375,14 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation,
             )}
 
             {/* Historical Performance */}
-            <div className="p-6 border-b border-gray-200">
-                <h4 className="font-semibold text-gray-900 mb-4">Historical Performance</h4>
+            <div className="p-6 border-b border-gray-200 dark:border-slate-700">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4">Historical Performance</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <PerformanceItem
                         label="1 Day"
-                        value={historical_performance["1d_change"]}
+                        value={livePriceUpdate?.change_percent ?? historical_performance["1d_change"]}
                         suffix="%"
+                        isLive={!!livePriceUpdate}
                     />
                     <PerformanceItem
                         label="7 Days"
@@ -286,40 +402,40 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation,
                 </div>
                 <div className="mt-4 grid grid-cols-2 gap-4">
                     <div>
-                        <p className="text-sm text-gray-600">52W High</p>
-                        <p className="font-semibold text-gray-900">₹{historical_performance.high_52w.toFixed(2)}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">52W High</p>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">₹{historical_performance.high_52w.toFixed(2)}</p>
                     </div>
                     <div>
-                        <p className="text-sm text-gray-600">52W Low</p>
-                        <p className="font-semibold text-gray-900">₹{historical_performance.low_52w.toFixed(2)}</p>
+                        <p className="text-sm text-gray-600 dark:text-gray-400">52W Low</p>
+                        <p className="font-semibold text-gray-900 dark:text-gray-100">₹{historical_performance.low_52w.toFixed(2)}</p>
                     </div>
                 </div>
             </div>
 
             {/* Forecast */}
-            <div className="p-6 border-b border-gray-200">
-                <h4 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-success-600" />
+            <div className="p-6 border-b border-gray-200 dark:border-slate-700">
+                <h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-4 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-success-600 dark:text-success-400" />
                     AI Forecast
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 bg-success-50 rounded-lg border border-success-200">
-                        <p className="text-sm text-success-700 mb-1">7-Day Forecast</p>
-                        <p className="text-2xl font-bold text-success-900">₹{forecast.price_7d.toFixed(2)}</p>
-                        <p className={`text-sm font-semibold ${forecast.expected_change_7d >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                    <div className="p-4 bg-success-50 dark:bg-success-900/20 rounded-lg border border-success-200 dark:border-success-800">
+                        <p className="text-sm text-success-700 dark:text-success-300 mb-1">7-Day Forecast</p>
+                        <p className="text-2xl font-bold text-success-900 dark:text-success-200">₹{forecast.price_7d.toFixed(2)}</p>
+                        <p className={`text-sm font-semibold ${forecast.expected_change_7d >= 0 ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'}`}>
                             {forecast.expected_change_7d >= 0 ? '+' : ''}{forecast.expected_change_7d.toFixed(2)}%
                         </p>
                     </div>
-                    <div className="p-4 bg-primary-50 rounded-lg border border-primary-200">
-                        <p className="text-sm text-primary-700 mb-1">30-Day Forecast</p>
-                        <p className="text-2xl font-bold text-primary-900">₹{forecast.price_30d.toFixed(2)}</p>
-                        <p className={`text-sm font-semibold ${forecast.expected_change_30d >= 0 ? 'text-success-600' : 'text-danger-600'}`}>
+                    <div className="p-4 bg-primary-50 dark:bg-primary-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                        <p className="text-sm text-primary-700 dark:text-primary-300 mb-1">30-Day Forecast</p>
+                        <p className="text-2xl font-bold text-primary-900 dark:text-primary-200">₹{forecast.price_30d.toFixed(2)}</p>
+                        <p className={`text-sm font-semibold ${forecast.expected_change_30d >= 0 ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400'}`}>
                             {forecast.expected_change_30d >= 0 ? '+' : ''}{forecast.expected_change_30d.toFixed(2)}%
                         </p>
                     </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-3">{forecast.forecast_basis}</p>
-                <p className="text-xs text-gray-500">Forecast Confidence: {forecast.confidence.toFixed(1)}%</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">{forecast.forecast_basis}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400">Forecast Confidence: {forecast.confidence.toFixed(1)}%</p>
             </div>
 
             {/* AI-Powered Analysis */}
@@ -328,49 +444,49 @@ const RecommendationCard: React.FC<RecommendationCardProps> = ({ recommendation,
                     onClick={() => setShowDetails(!showDetails)}
                     className="w-full flex items-center justify-between text-left"
                 >
-                    <h4 className="font-semibold text-gray-900 flex items-center gap-2">
-                        <Sparkles className="w-5 h-5 text-primary-600" />
+                    <h4 className="font-semibold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                         Deep AI Analysis & Reasoning
                     </h4>
-                    <span className="text-primary-600">{showDetails ? '▼' : '▶'}</span>
+                    <span className="text-primary-600 dark:text-primary-400">{showDetails ? '▼' : '▶'}</span>
                 </button>
                 {showDetails && (
                     <div className="mt-4 space-y-4">
                         {/* AI Reasoning (Enhanced) */}
                         {ai_reasoning && (
-                            <div className="p-4 bg-gradient-to-r from-primary-50 to-blue-50 rounded-lg border border-primary-200">
-                                <h5 className="font-semibold text-gray-900 mb-2 flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4 text-primary-600" />
+                            <div className="p-4 bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-lg border border-primary-200 dark:border-primary-800">
+                                <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-2 flex items-center gap-2">
+                                    <Sparkles className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                                     AI Comparative Analysis
                                 </h5>
-                                <p className="text-sm text-gray-700 leading-relaxed">{ai_reasoning}</p>
+                                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{ai_reasoning}</p>
                             </div>
                         )}
 
                         {/* Market Context */}
                         {market_context && (
-                            <div className="p-4 bg-purple-50 rounded-lg border border-purple-200">
-                                <h5 className="font-semibold text-gray-900 mb-2">Market Context</h5>
-                                <p className="text-sm text-gray-700 leading-relaxed">{market_context}</p>
+                            <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg border border-purple-200 dark:border-purple-800">
+                                <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Market Context</h5>
+                                <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{market_context}</p>
                             </div>
                         )}
 
                         {/* Base Reasoning */}
-                        <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <h5 className="font-semibold text-gray-900 mb-2">Analysis Summary</h5>
-                            <p className="text-sm text-gray-700 leading-relaxed">{reasoning}</p>
+                        <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
+                            <h5 className="font-semibold text-gray-900 dark:text-gray-100 mb-2">Analysis Summary</h5>
+                            <p className="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{reasoning}</p>
                         </div>
 
                         {/* Comparative Advantages */}
                         {comparative_advantages && comparative_advantages.length > 0 && (
-                            <div className="p-4 bg-success-50 rounded-lg border border-success-200">
-                                <h5 className="font-semibold text-success-900 mb-2 flex items-center gap-2">
-                                    <TrendingUp className="w-4 h-4 text-success-600" />
+                            <div className="p-4 bg-success-50 dark:bg-success-900/20 rounded-lg border border-success-200 dark:border-success-800">
+                                <h5 className="font-semibold text-success-900 dark:text-success-200 mb-2 flex items-center gap-2">
+                                    <TrendingUp className="w-4 h-4 text-success-600 dark:text-success-400" />
                                     Key Advantages
                                 </h5>
                                 <ul className="list-disc list-inside space-y-1">
                                     {comparative_advantages.map((advantage, idx) => (
-                                        <li key={idx} className="text-sm text-success-800">{advantage}</li>
+                                        <li key={idx} className="text-sm text-success-800 dark:text-success-300">{advantage}</li>
                                     ))}
                                 </ul>
                             </div>
@@ -424,9 +540,9 @@ interface MetricItemProps {
     valueColor?: string;
 }
 
-const MetricItem: React.FC<MetricItemProps> = ({ label, value, icon, valueColor = 'text-gray-900' }) => (
+const MetricItem: React.FC<MetricItemProps> = ({ label, value, icon, valueColor = 'text-gray-900 dark:text-gray-100' }) => (
     <div>
-        <div className="flex items-center gap-2 text-gray-600 text-sm mb-1">
+        <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400 text-sm mb-1">
             {icon}
             <span>{label}</span>
         </div>
@@ -438,16 +554,25 @@ interface PerformanceItemProps {
     label: string;
     value: number;
     suffix?: string;
+    isLive?: boolean;
 }
 
-const PerformanceItem: React.FC<PerformanceItemProps> = ({ label, value, suffix = '' }) => {
+const PerformanceItem: React.FC<PerformanceItemProps> = ({ label, value, suffix = '', isLive = false }) => {
     const isPositive = value >= 0;
-    const color = isPositive ? 'text-success-600' : 'text-danger-600';
+    const color = isPositive ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400';
     const Icon = isPositive ? TrendingUp : TrendingDown;
 
     return (
-        <div className="p-3 bg-gray-50 rounded-lg">
-            <p className="text-xs text-gray-600 mb-1">{label}</p>
+        <div className={`p-3 bg-gray-50 dark:bg-slate-800 rounded-lg transition-all duration-300 ${isLive ? 'ring-2 ring-primary-400 dark:ring-primary-500 shadow-md' : ''}`}>
+            <div className="flex items-center justify-between mb-1">
+                <p className="text-xs text-gray-600 dark:text-gray-400">{label}</p>
+                {isLive && (
+                    <span className="flex items-center gap-1 text-xs text-primary-600 dark:text-primary-400 font-medium">
+                        <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                        Live
+                    </span>
+                )}
+            </div>
             <div className="flex items-center gap-1">
                 <Icon className={`w-4 h-4 ${color}`} />
                 <p className={`font-bold ${color}`}>

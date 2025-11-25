@@ -33,35 +33,35 @@ export const Login: React.FC = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-            <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 flex items-center justify-center p-4 transition-colors duration-200">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 w-full max-w-md">
                 <div className="text-center mb-8">
                     <div className="flex items-center justify-center gap-2 mb-2">
-                        <BarChart3 className="w-10 h-10 text-blue-600" />
-                        <h1 className="text-3xl font-bold text-gray-900">AI Hub</h1>
+                        <BarChart3 className="w-10 h-10 text-blue-600 dark:text-blue-400" />
+                        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">AI Hub</h1>
                     </div>
-                    <p className="text-gray-600">Stock Market Intelligence</p>
+                    <p className="text-gray-600 dark:text-gray-400">Stock Market Intelligence</p>
                 </div>
 
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
                         <input
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="input-field"
                             required
                         />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Password</label>
                         <input
                             type="password"
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
-                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                            className="input-field"
                             required
                         />
                     </div>
@@ -75,9 +75,9 @@ export const Login: React.FC = () => {
                     </button>
                 </form>
 
-                <p className="mt-6 text-center text-sm text-gray-600">
+                <p className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
                     Don't have an account?{' '}
-                    <Link to="/signup" className="text-blue-600 hover:underline font-medium">
+                    <Link to="/signup" className="text-blue-600 dark:text-blue-400 hover:underline font-medium">
                         Sign up
                     </Link>
                 </p>

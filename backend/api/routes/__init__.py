@@ -3,7 +3,10 @@ API Routes package initialization.
 """
 
 from fastapi import APIRouter
-from api.routes import auth, analysis, portfolio, stocks, notifications, watchlist, recommendations
+from api.routes import (
+    auth, analysis, portfolio, stocks, notifications, watchlist, recommendations,
+    backtesting, orders, security, risk, explainability
+)
 
 # Create main API router
 api_router = APIRouter()
@@ -23,5 +26,12 @@ api_router.include_router(notifications.router, prefix="/notifications", tags=["
 
 # AI-powered stock recommendations
 api_router.include_router(recommendations.router, prefix="/recommendations", tags=["Recommendations"])
+
+# New professional features
+api_router.include_router(backtesting.router, prefix="/backtesting", tags=["Backtesting"])
+api_router.include_router(orders.router, prefix="/orders", tags=["Orders"])
+api_router.include_router(security.router, prefix="/security", tags=["Security"])
+api_router.include_router(risk.router, prefix="/risk", tags=["Risk Management"])
+api_router.include_router(explainability.router, prefix="/explainability", tags=["AI Explainability"])
 
 __all__ = ["api_router"]

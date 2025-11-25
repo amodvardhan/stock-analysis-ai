@@ -411,6 +411,16 @@ async def global_exception_handler(request: Request, exc: Exception):
 # =============================================================================
 app.include_router(api_router, prefix="/api/v1")
 
+# =============================================================================
+# WebSocket Routes
+# =============================================================================
+from api.routes.websocket import websocket_endpoint
+
+@app.websocket("/ws")
+async def websocket_route(websocket, token: str = None):
+    """WebSocket endpoint for real-time stock price updates."""
+    await websocket_endpoint(websocket, token)
+
 
 # =============================================================================
 # Health Check & Status Endpoints

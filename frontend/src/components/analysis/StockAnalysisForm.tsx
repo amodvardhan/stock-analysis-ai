@@ -38,12 +38,12 @@ export const StockAnalysisForm = ({ onAnalysisComplete }: Props) => {
                 <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center">
                     <Search className="w-5 h-5 text-white" />
                 </div>
-                <h2 className="text-xl lg:text-2xl font-bold text-gray-900">Analyze Stock</h2>
+                <h2 className="text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100">Analyze Stock</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Stock Symbol
                     </label>
                     <input
@@ -58,7 +58,7 @@ export const StockAnalysisForm = ({ onAnalysisComplete }: Props) => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Market
                     </label>
                     <select
@@ -75,7 +75,7 @@ export const StockAnalysisForm = ({ onAnalysisComplete }: Props) => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Company Name (Optional)
                     </label>
                     <input
@@ -89,7 +89,7 @@ export const StockAnalysisForm = ({ onAnalysisComplete }: Props) => {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                         Risk Tolerance
                     </label>
                     <select

@@ -60,7 +60,7 @@ export const Portfolio: React.FC = () => {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
             </div>
         );
     }
@@ -68,7 +68,7 @@ export const Portfolio: React.FC = () => {
     if (!summary) {
         return (
             <div className="text-center py-12">
-                <p className="text-gray-500">Failed to load portfolio</p>
+                <p className="text-gray-500 dark:text-gray-400">Failed to load portfolio</p>
             </div>
         );
     }
@@ -80,8 +80,8 @@ export const Portfolio: React.FC = () => {
             {/* Header */}
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
-                    <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-1">My Portfolio</h1>
-                    <p className="text-gray-500 text-sm">
+                    <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100 mb-1">My Portfolio</h1>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
                         Last updated: {new Date(portfolio.last_updated).toLocaleString()}
                     </p>
                 </div>
@@ -136,8 +136,8 @@ export const Portfolio: React.FC = () => {
 
             {/* Holdings Table */}
             <div className="card overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100/50">
-                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-slate-800 dark:to-slate-800/50">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                         <span className="w-1 h-6 bg-gradient-to-b from-primary-600 to-primary-700 rounded-full"></span>
                         Holdings ({holdings.length})
                     </h2>
@@ -145,11 +145,11 @@ export const Portfolio: React.FC = () => {
 
                 {holdings.length === 0 ? (
                     <div className="text-center py-16">
-                        <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-blue-100 dark:from-primary-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
                             <span className="text-4xl">📊</span>
                         </div>
-                        <p className="text-gray-500 mb-2 font-medium">Your portfolio is empty</p>
-                        <p className="text-sm text-gray-400 mb-6">Start building your portfolio by adding your first stock</p>
+                        <p className="text-gray-500 dark:text-gray-400 mb-2 font-medium">Your portfolio is empty</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">Start building your portfolio by adding your first stock</p>
                         <button
                             onClick={() => setShowAddModal(true)}
                             className="btn-primary"
@@ -159,36 +159,36 @@ export const Portfolio: React.FC = () => {
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-slate-800 dark:to-slate-800/50">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Stock
                                     </th>
-                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Quantity
                                     </th>
-                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Avg. Buy Price
                                     </th>
-                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Current Price
                                     </th>
-                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Invested
                                     </th>
-                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Current Value
                                     </th>
-                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         P&L
                                     </th>
-                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-100">
+                            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-100 dark:divide-slate-700">
                                 {holdings.map((holding) => (
                                     <HoldingRow
                                         key={holding.id}
@@ -205,7 +205,7 @@ export const Portfolio: React.FC = () => {
             {/* Sector Allocation */}
             {holdings.length > 0 && (
                 <div className="card">
-                    <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 mb-6 flex items-center gap-2">
                         <span className="w-1 h-6 bg-gradient-to-b from-primary-600 to-primary-700 rounded-full"></span>
                         Sector Allocation
                     </h2>
@@ -280,36 +280,36 @@ interface HoldingRowProps {
 const HoldingRow: React.FC<HoldingRowProps> = ({ holding, onRemove }) => {
     const { stock, quantity, average_buy_price, total_invested, current_price, current_value, unrealized_pl, unrealized_pl_percentage } = holding;
 
-    const plColor = unrealized_pl && unrealized_pl >= 0 ? 'text-success-600' : 'text-danger-600';
-    const plBgColor = unrealized_pl && unrealized_pl >= 0 ? 'bg-success-50 border-success-200' : 'bg-danger-50 border-danger-200';
+    const plColor = unrealized_pl && unrealized_pl >= 0 ? 'text-success-600 dark:text-success-400' : 'text-danger-600 dark:text-danger-400';
+    const plBgColor = unrealized_pl && unrealized_pl >= 0 ? 'bg-success-50 dark:bg-success-900/30 border-success-200 dark:border-success-800' : 'bg-danger-50 dark:bg-danger-900/30 border-danger-200 dark:border-danger-800';
     const plIcon = unrealized_pl && unrealized_pl >= 0 ? '↑' : '↓';
 
     return (
         <tr className="table-row">
             <td className="px-6 py-4 whitespace-nowrap">
                 <div>
-                    <div className="text-sm font-semibold text-gray-900">{stock.symbol}</div>
-                    <div className="text-xs text-gray-500">{stock.company_name}</div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{stock.symbol}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{stock.company_name}</div>
                 </div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right">
-                <span className="text-sm font-medium text-gray-900">{quantity}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">{quantity}</span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right">
-                <span className="text-sm font-medium text-gray-900">₹{average_buy_price.toFixed(2)}</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">₹{average_buy_price.toFixed(2)}</span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right">
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {current_price ? `₹${current_price.toFixed(2)}` : '-'}
                 </span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right">
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     ₹{total_invested.toLocaleString('en-IN', { maximumFractionDigits: 2 })}
                 </span>
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right">
-                <span className="text-sm font-medium text-gray-900">
+                <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                     {current_value ? `₹${current_value.toLocaleString('en-IN', { maximumFractionDigits: 2 })}` : '-'}
                 </span>
             </td>
@@ -331,7 +331,7 @@ const HoldingRow: React.FC<HoldingRowProps> = ({ holding, onRemove }) => {
             <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                 <button
                     onClick={() => onRemove(holding.id, stock.symbol)}
-                    className="text-danger-600 hover:text-danger-700 font-medium hover:underline transition-colors"
+                    className="text-danger-600 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300 font-medium hover:underline transition-colors"
                 >
                     Remove
                 </button>

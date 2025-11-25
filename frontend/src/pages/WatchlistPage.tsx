@@ -50,7 +50,7 @@ const WatchlistPage: React.FC = () => {
     if (loading) {
         return (
             <div className="flex justify-center items-center h-screen">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-400"></div>
             </div>
         );
     }
@@ -61,10 +61,10 @@ const WatchlistPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
                     <div className="flex items-center gap-2 mb-2">
-                        <Eye className="w-6 h-6 text-primary-600" />
-                        <h1 className="text-3xl lg:text-4xl font-bold text-gray-900">My Watchlist</h1>
+                        <Eye className="w-6 h-6 text-primary-600 dark:text-primary-400" />
+                        <h1 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-gray-100">My Watchlist</h1>
                     </div>
-                    <p className="text-gray-500 text-sm">
+                    <p className="text-gray-500 dark:text-gray-400 text-sm">
                         Monitor stocks you're interested in and get real-time alerts
                     </p>
                 </div>
@@ -101,8 +101,8 @@ const WatchlistPage: React.FC = () => {
 
             {/* Watchlist Table */}
             <div className="card overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100/50">
-                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-slate-800 dark:to-slate-800/50">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
                         <span className="w-1 h-6 bg-gradient-to-b from-primary-600 to-primary-700 rounded-full"></span>
                         Stocks ({items.length})
                     </h2>
@@ -110,11 +110,11 @@ const WatchlistPage: React.FC = () => {
 
                 {items.length === 0 ? (
                     <div className="text-center py-16">
-                        <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Eye className="w-10 h-10 text-primary-600" />
+                        <div className="w-20 h-20 bg-gradient-to-br from-primary-100 to-blue-100 dark:from-primary-900/30 dark:to-blue-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Eye className="w-10 h-10 text-primary-600 dark:text-primary-400" />
                         </div>
-                        <p className="text-gray-500 mb-2 font-medium">Your watchlist is empty</p>
-                        <p className="text-sm text-gray-400 mb-6">Start tracking stocks by adding them to your watchlist</p>
+                        <p className="text-gray-500 dark:text-gray-400 mb-2 font-medium">Your watchlist is empty</p>
+                        <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">Start tracking stocks by adding them to your watchlist</p>
                         <button
                             onClick={() => setShowAdd(true)}
                             className="btn-primary"
@@ -124,33 +124,33 @@ const WatchlistPage: React.FC = () => {
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
-                        <table className="min-w-full divide-y divide-gray-200">
-                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50">
+                        <table className="min-w-full divide-y divide-gray-200 dark:divide-slate-700">
+                            <thead className="bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-slate-800 dark:to-slate-800/50">
                                 <tr>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Stock
                                     </th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Market
                                     </th>
-                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Current Price
                                     </th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Price Alert
                                     </th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Targets
                                     </th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         AI Signal
                                     </th>
-                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 uppercase tracking-wider">
+                                    <th className="px-6 py-4 text-right text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="bg-white divide-y divide-gray-100">
+                            <tbody className="bg-white dark:bg-slate-800 divide-y divide-gray-100 dark:divide-slate-700">
                                 {items.map((item) => (
                                     <WatchlistRow
                                         key={item.id}
@@ -212,8 +212,8 @@ const WatchlistRow: React.FC<WatchlistRowProps> = ({ item, onRemove }) => {
         <tr className="table-row">
             <td className="px-6 py-4 whitespace-nowrap">
                 <div>
-                    <div className="text-sm font-semibold text-gray-900">{item.stock.symbol}</div>
-                    <div className="text-xs text-gray-500">{item.stock.company_name}</div>
+                    <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{item.stock.symbol}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400">{item.stock.company_name}</div>
                 </div>
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
@@ -221,45 +221,45 @@ const WatchlistRow: React.FC<WatchlistRowProps> = ({ item, onRemove }) => {
             </td>
             <td className="px-6 py-4 whitespace-nowrap text-right">
                 {item.stock.current_price != null ? (
-                    <span className="text-sm font-semibold text-gray-900">
+                    <span className="text-sm font-semibold text-gray-900 dark:text-gray-100">
                         ₹{item.stock.current_price.toFixed(2)}
                     </span>
                 ) : (
-                    <span className="text-sm text-gray-400">-</span>
+                    <span className="text-sm text-gray-400 dark:text-gray-500">-</span>
                 )}
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
                 {item.alert_on_price_change ? (
                     <div className="flex items-center gap-2">
-                        <Bell className="w-4 h-4 text-success-600" />
-                        <span className="text-sm font-medium text-gray-900">
+                        <Bell className="w-4 h-4 text-success-600 dark:text-success-400" />
+                        <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
                             {item.alert_threshold_percent.toFixed(1)}%
                         </span>
                     </div>
                 ) : (
-                    <span className="text-sm text-gray-400">Off</span>
+                    <span className="text-sm text-gray-400 dark:text-gray-500">Off</span>
                 )}
             </td>
             <td className="px-6 py-4 whitespace-nowrap">
                 <div className="flex flex-col gap-1">
                     {item.target_buy_price && (
                         <div className="flex items-center gap-1 text-xs">
-                            <TrendingUp className="w-3 h-3 text-success-600" />
-                            <span className="text-success-700 font-medium">
+                            <TrendingUp className="w-3 h-3 text-success-600 dark:text-success-400" />
+                            <span className="text-success-700 dark:text-success-300 font-medium">
                                 Buy ≤ ₹{item.target_buy_price.toFixed(2)}
                             </span>
                         </div>
                     )}
                     {item.target_sell_price && (
                         <div className="flex items-center gap-1 text-xs">
-                            <Target className="w-3 h-3 text-danger-600" />
-                            <span className="text-danger-700 font-medium">
+                            <Target className="w-3 h-3 text-danger-600 dark:text-danger-400" />
+                            <span className="text-danger-700 dark:text-danger-300 font-medium">
                                 Sell ≥ ₹{item.target_sell_price.toFixed(2)}
                             </span>
                         </div>
                     )}
                     {!item.target_buy_price && !item.target_sell_price && (
-                        <span className="text-xs text-gray-400">None</span>
+                        <span className="text-xs text-gray-400 dark:text-gray-500">None</span>
                     )}
                 </div>
             </td>
@@ -273,7 +273,7 @@ const WatchlistRow: React.FC<WatchlistRowProps> = ({ item, onRemove }) => {
             <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
                 <button
                     onClick={() => onRemove(item.id, item.stock.symbol)}
-                    className="text-danger-600 hover:text-danger-700 font-medium hover:underline transition-colors"
+                    className="text-danger-600 dark:text-danger-400 hover:text-danger-700 dark:hover:text-danger-300 font-medium hover:underline transition-colors"
                 >
                     Remove
                 </button>
@@ -335,16 +335,16 @@ const AddWatchlistModal: React.FC<AddWatchlistModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
-                <div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-gray-100/50 flex justify-between items-center sticky top-0 bg-white">
-                    <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
-                        <Eye className="w-5 h-5 text-primary-600" />
+        <div className="fixed inset-0 bg-black bg-opacity-40 dark:bg-opacity-60 flex items-center justify-center z-50 p-4">
+            <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+                <div className="px-6 py-4 border-b border-gray-200 dark:border-slate-700 bg-gradient-to-r from-gray-50 to-gray-100/50 dark:from-slate-800 dark:to-slate-800/50 flex justify-between items-center sticky top-0 bg-white dark:bg-slate-800">
+                    <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100 flex items-center gap-2">
+                        <Eye className="w-5 h-5 text-primary-600 dark:text-primary-400" />
                         Add to Watchlist
                     </h2>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-gray-600 transition-colors p-1 hover:bg-gray-100 rounded-lg"
+                        className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1 hover:bg-gray-100 dark:hover:bg-slate-700 rounded-lg"
                     >
                         <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -353,7 +353,7 @@ const AddWatchlistModal: React.FC<AddWatchlistModalProps> = ({
                 </div>
                 <form onSubmit={handleSubmit} className="px-6 py-6 space-y-5">
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Stock Symbol *
                         </label>
                         <input
@@ -366,7 +366,7 @@ const AddWatchlistModal: React.FC<AddWatchlistModalProps> = ({
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                             Market *
                         </label>
                         <select
@@ -382,23 +382,23 @@ const AddWatchlistModal: React.FC<AddWatchlistModalProps> = ({
                             <option value="us_nasdaq">US NASDAQ</option>
                         </select>
                     </div>
-                    <div className="flex items-center gap-3 p-4 bg-primary-50 rounded-xl border border-primary-100">
+                    <div className="flex items-center gap-3 p-4 bg-primary-50 dark:bg-primary-900/20 rounded-xl border border-primary-100 dark:border-primary-800">
                         <input
                             id="alert_on_price_change"
                             type="checkbox"
                             name="alert_on_price_change"
                             checked={form.alert_on_price_change ?? true}
                             onChange={handleChange}
-                            className="w-5 h-5 text-primary-600 border-gray-300 rounded focus:ring-primary-500"
+                            className="w-5 h-5 text-primary-600 dark:text-primary-400 border-gray-300 dark:border-slate-600 rounded focus:ring-primary-500 bg-white dark:bg-slate-700"
                         />
-                        <label htmlFor="alert_on_price_change" className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                            <Bell className="w-4 h-4 text-primary-600" />
+                        <label htmlFor="alert_on_price_change" className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                            <Bell className="w-4 h-4 text-primary-600 dark:text-primary-400" />
                             Alert on price change
                         </label>
                     </div>
                     {form.alert_on_price_change && (
                         <div>
-                            <label className="block text-sm font-semibold text-gray-700 mb-2">
+                            <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                                 Alert Threshold (% move)
                             </label>
                             <input
@@ -414,8 +414,8 @@ const AddWatchlistModal: React.FC<AddWatchlistModalProps> = ({
                     )}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                <TrendingUp className="w-4 h-4 text-success-600" />
+                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                <TrendingUp className="w-4 h-4 text-success-600 dark:text-success-400" />
                                 Target Buy Price (₹)
                             </label>
                             <input
@@ -430,8 +430,8 @@ const AddWatchlistModal: React.FC<AddWatchlistModalProps> = ({
                             />
                         </div>
                         <div>
-                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2">
-                                <Target className="w-4 h-4 text-danger-600" />
+                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                                <Target className="w-4 h-4 text-danger-600 dark:text-danger-400" />
                                 Target Sell Price (₹)
                             </label>
                             <input
@@ -446,21 +446,21 @@ const AddWatchlistModal: React.FC<AddWatchlistModalProps> = ({
                             />
                         </div>
                     </div>
-                    <div className="flex items-center gap-3 p-4 bg-purple-50 rounded-xl border border-purple-100">
+                    <div className="flex items-center gap-3 p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-100 dark:border-purple-800">
                         <input
                             id="alert_on_ai_signal"
                             type="checkbox"
                             name="alert_on_ai_signal"
                             checked={form.alert_on_ai_signal ?? true}
                             onChange={handleChange}
-                            className="w-5 h-5 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                            className="w-5 h-5 text-purple-600 dark:text-purple-400 border-gray-300 dark:border-slate-600 rounded focus:ring-purple-500 bg-white dark:bg-slate-700"
                         />
-                        <label htmlFor="alert_on_ai_signal" className="text-sm font-medium text-gray-700">
+                        <label htmlFor="alert_on_ai_signal" className="text-sm font-medium text-gray-700 dark:text-gray-300">
                             Alert when AI gives strong BUY/SELL signal
                         </label>
                     </div>
                     <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">Notes</label>
+                        <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Notes</label>
                         <textarea
                             name="notes"
                             value={form.notes ?? ''}
@@ -470,7 +470,7 @@ const AddWatchlistModal: React.FC<AddWatchlistModalProps> = ({
                             placeholder="Optional notes about this stock..."
                         />
                     </div>
-                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-200">
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-200 dark:border-slate-700">
                         <button
                             type="button"
                             onClick={onClose}

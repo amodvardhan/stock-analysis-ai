@@ -4,7 +4,7 @@ import { Sidebar } from './Sidebar'
 
 export const Layout = () => {
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-slate-50 dark:from-slate-900 dark:via-slate-900 dark:to-slate-800 transition-colors duration-200">
             <Header />
             <div className="flex">
                 <Sidebar />

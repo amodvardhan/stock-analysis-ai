@@ -10,6 +10,9 @@ import { Portfolio } from '@/pages/Portfolio'
 import { useAuthStore } from '@/stores/authStore'
 import WatchlistPage from '@/pages/WatchlistPage'
 import RecommendationsPage from '@/pages/RecommendationsPage'
+import { BacktestingPage } from '@/pages/BacktestingPage'
+import { OrdersPage } from '@/pages/OrdersPage'
+import { RiskDashboardPage } from '@/pages/RiskDashboardPage'
 
 // Protected Route wrapper
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
@@ -41,6 +44,9 @@ function App() {
                     <Route path="recommendations" element={<RecommendationsPage />} />
                     <Route path="portfolio" element={<Portfolio />} />
                     <Route path="watchlist" element={<WatchlistPage />} />
+                    <Route path="backtesting" element={<BacktestingPage />} />
+                    <Route path="orders" element={<OrdersPage />} />
+                    <Route path="risk" element={<RiskDashboardPage />} />
 
                 </Route>
             </Routes>
